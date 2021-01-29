@@ -1,4 +1,4 @@
-const api_url = "http://localhost:3000/";
+const api_url = "http://la-testapi-rest.stevenrummler.com/";
 
 function Register() {
   const fname = document.getElementById("fname").value;

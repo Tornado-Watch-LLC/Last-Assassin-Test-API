@@ -1,4 +1,4 @@
-var socket = io("localhost:3001");
+var socket = io("http://la-testapi-sock.stevenrummler.com/");
 
 // Lobby Client -> Server Messages
 
