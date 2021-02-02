@@ -1,14 +1,14 @@
-var socket = io("http://la-testapi-sock.stevenrummler.com/");
-
+//var socket = io("http://la-testapi-sock.stevenrummler.com/");
+var socket = io("http://localhost:3001/");
 // Lobby Client -> Server Messages
 
 function CreateLobby() {
-  let data = {
-    rule1: document.getElementById("rule1").value,
-    rule2: document.getElementById("rule2").value,
-    rule3: document.getElementById("rule3").value,
-  };
-  socket.emit("createLobby", data);
+  // let data = {
+  //   rule1: document.getElementById("rule1").value,
+  //   rule2: document.getElementById("rule2").value,
+  //   rule3: document.getElementById("rule3").value,
+  // };
+  socket.emit("createLobby" /*, data*/);
 }
 function JoinLobby() {
   let data = {
@@ -19,20 +19,23 @@ function JoinLobby() {
 function LeaveLobby() {
   socket.emit("leaveLobby");
 }
-function UpdateRuleset() {
-  let data = {
-    rule1: document.getElementById("u_rule1").value,
-    rule2: document.getElementById("u_rule2").value,
-    rule3: document.getElementById("u_rule3").value,
-  };
-  socket.emit("updateRuleset", data);
-}
+// function UpdateRuleset() {
+//   let data = {
+//     rule1: document.getElementById("u_rule1").value,
+//     rule2: document.getElementById("u_rule2").value,
+//     rule3: document.getElementById("u_rule3").value,
+//   };
+//   socket.emit("updateRuleset", data);
+// }
 function StartGame() {
   socket.emit("startGame");
 }
 
 // Lobby Server -> Client Messages
 
+socket.on("lobbyJoin", (data) => {
+  document.getElementById("lobby_join_message").innerHTML = data;
+});
 socket.on("rulesetUpdate", function (data) {
   document.getElementById("ruleset_update_message").innerHTML = data;
 });

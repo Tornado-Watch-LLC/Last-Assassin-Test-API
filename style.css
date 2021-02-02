@@ -1,0 +1,10 @@
+body > div {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+div > div {
+  border: 1px solid black;
+  padding: 5px;
+  text-align: center;
+}
