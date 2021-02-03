@@ -14,6 +14,11 @@ function Create() {
     })
     .then((data) => {
       document.getElementById("create_result").innerHTML = JSON.stringify(data);
+      // Set other game code inputs to this code.
+      console.log(data);
+      document.getElementById("scode").value = data.Game;
+      document.getElementById("lcode").value = data.Game;
+      document.getElementById("code").value = data.Game;
     })
     .catch((error) => {
       console.error("Error:", error);
@@ -48,6 +53,7 @@ function Start() {
 function Lobby() {
   const code = document.getElementById("lcode").value;
   const name = document.getElementById("lname").value;
+  document.getElementById("name").value = name;
   const request = {
     Game: code,
     Player: name,
