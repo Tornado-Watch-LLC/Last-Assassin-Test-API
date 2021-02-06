@@ -154,7 +154,7 @@ function InGameHeartbeat(code, name, lat, long, timestamp, res) {
 
   // Check if game is over, if so stop and send game over data
   if (game.GameEnded) {
-    return gameOver(game, player);
+    return gameOver(game, player, res);
   }
 
   // Update player data
@@ -189,10 +189,10 @@ function InGameHeartbeat(code, name, lat, long, timestamp, res) {
       // Update target status and living player count
       target.Living = false;
       player.Kills += 1;
-      game.LivingPlayers -= 1;
+      game.PlayersAlive -= 1;
 
       // If no more living players
-      if (game.LivingPlayers < 2) {
+      if (game.PlayersAlive < 2) {
         // End game, set winner and final scores
         game.GameOver = true;
         let results = {};
@@ -203,15 +203,15 @@ function InGameHeartbeat(code, name, lat, long, timestamp, res) {
           results[key] = value.Kills;
         }
         game.FinalScores = results;
-        return gameOver(game, player);
+        return gameOver(game, player, res);
       } else {
         // Assign next target
-        player.Target = target.target;
+        player.Target = target.Target;
       }
     }
   }
 
-  target = player.Target;
+  target = players[player.Target];
   // Send ongoing game data
   return res.send({
     CurrentlyAlive: living,
@@ -224,7 +224,7 @@ function InGameHeartbeat(code, name, lat, long, timestamp, res) {
   });
 }
 
-function gameOver(game, player) {
+function gameOver(game, player, res) {
   return res.send({
     CurrentlyAlive: player.Living,
     CurrentKills: player.Kills,
