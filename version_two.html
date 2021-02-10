@@ -14,6 +14,8 @@
 
     <label for="scode">Game Code:</label>
     <input type="text" id="scode" name="scode" /><br /><br />
+    <label for="delay">Start Delay (seconds):</label>
+    <input type="number" id="delay" name="delay" /><br /><br />
     <button onclick="Start()">Send</button>
     <p id="start_result">Results will go here.</p>
 
@@ -36,8 +38,6 @@
     <input type="number" id="lat" name="lat" value=".0005" /><br /><br />
     <label for="long">Longitude:</label>
     <input type="number" id="long" name="long" value=".0005" /><br /><br />
-    <label for="timestamp">Timestamp:</label>
-    <input type="datetime-local" id="timestamp" name="timestamp" /><br /><br />
     <button onclick="Game()">Send</button>
     <p id="game_result">Results will go here.</p>
 

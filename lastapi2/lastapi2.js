@@ -12,6 +12,7 @@ Games = {
     GameCode: {
         PlayerList: [strings]
         GameStarted: boolean
+        KillStartTime: datetime
         Players: {
             PlayerName: {
                 Living: boolean
@@ -64,18 +65,18 @@ app.post("/", async (req, res) => {
   // Start Game Request
   if (!req.body.Player) {
     const code = req.body.Game;
-    return startGame(code, res);
+    const delay = req.body.Delay;
+    return startGame(code, delay, res);
   }
 
   // In-Game Heartbeat
-  if (req.body.Latitude && req.body.Longitude && req.body.Timestamp) {
+  if (req.body.Latitude && req.body.Longitude) {
     const code = req.body.Game;
     const name = req.body.Player;
     const lat = req.body.Latitude;
     const long = req.body.Longitude;
-    const timestamp = new Date(req.body.Timestamp);
 
-    return InGameHeartbeat(code, name, lat, long, timestamp, res);
+    return InGameHeartbeat(code, name, lat, long, res);
   }
 
   // Lobby Heartbeat
@@ -96,20 +97,22 @@ function makeid(length) {
   return result;
 }
 
-function startGame(code, res) {
+function startGame(code, delay, res) {
   if (code in games) {
     if (games[code].GameStarted) return sendError(res, "Game already started.");
     else {
-      setupGame(code);
+      setupGame(code, delay);
       return res.send({ GameStarted: true });
     }
   } else return sendError(res, "Game does not exist.");
 }
 
-function setupGame(code) {
+function setupGame(code, delay) {
   // Basic setup
   let game = games[code];
   game.GameStarted = true;
+  let now = new Date();
+  game.KillStartTime = new Date(now.getTime() + delay * 1000);
   game.GameOver = false;
   game.Players = {};
   const player_count = game.PlayerList.length;
@@ -133,7 +136,7 @@ function setupGame(code) {
   }
 }
 
-function InGameHeartbeat(code, name, lat, long, timestamp, res) {
+function InGameHeartbeat(code, name, lat, long, res) {
   // Confirm valid game and player
   if (!(code in games)) return sendError(res, "Game does not exist.");
   let game = games[code];
@@ -160,6 +163,7 @@ function InGameHeartbeat(code, name, lat, long, timestamp, res) {
   // Update player data
   player.Latitude = lat;
   player.Longitude = long;
+  let timestamp = new Date();
   player.Timestamp = timestamp;
 
   // Get target data
@@ -170,7 +174,10 @@ function InGameHeartbeat(code, name, lat, long, timestamp, res) {
   let targetTimestamp = target.Timestamp;
 
   // Attempt assassination
-  if (target.Latitude != 0) {
+  console.log("Timestamp: ", timestamp);
+  console.log("Kill Start: ", game.KillStartTime);
+  console.log(timestamp > game.KillStartTime);
+  if (target.Latitude != 0 && timestamp > game.KillStartTime) {
     // Calculate kill distance based on time since target update
     const targetVulnerableRange = (timestamp - targetTimestamp) / 150;
     const killDistance = 10 + targetVulnerableRange;
@@ -219,7 +226,6 @@ function InGameHeartbeat(code, name, lat, long, timestamp, res) {
     TargetName: player.Target,
     TargetLatitude: target.Latitude,
     TargetLongitude: target.Longitude,
-    TargetTimestamp: target.Timestamp,
     PlayersAlive: game.PlayersAlive,
   });
 }

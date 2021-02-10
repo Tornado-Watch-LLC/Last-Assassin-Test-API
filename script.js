@@ -1,5 +1,5 @@
-//const api_url = "http://lastapi.stevenrummler.com/";
-const api_url = "http://localhost:3000/";
+const api_url = "http://lastapi.stevenrummler.com/";
+//const api_url = "http://localhost:3000/";
 
 function Create() {
   fetch(api_url, {
@@ -27,8 +27,10 @@ function Create() {
 
 function Start() {
   const code = document.getElementById("scode").value;
+  const delay = document.getElementById("delay").value;
   const request = {
     Game: code,
+    Delay: delay,
   };
   fetch(api_url, {
     method: "POST",
@@ -83,13 +85,11 @@ function Game() {
   const name = document.getElementById("name").value;
   const lat = document.getElementById("lat").value;
   const long = document.getElementById("long").value;
-  const timestamp = document.getElementById("timestamp").value;
   const request = {
     Game: code,
     Player: name,
     Latitude: lat,
     Longitude: long,
-    Timestamp: timestamp,
   };
   fetch(api_url, {
     method: "POST",
