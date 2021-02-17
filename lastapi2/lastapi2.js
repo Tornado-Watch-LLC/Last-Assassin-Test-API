@@ -190,8 +190,8 @@ function InGameHeartbeat(code, name, lat, long, res) {
       target.Target != name
     ) {
       // Calculate kill distance based on time since target update
-      const targetVulnerableRange = (timestamp - targetTimestamp) / 150;
-      const killDistance = 5 + targetVulnerableRange;
+      const targetVulnerableRange = (timestamp - targetTimestamp) / 300;
+      const killDistance = 1 + targetVulnerableRange;
 
       // Calculate distance to target
       const targetDistance = haversine(lat, long, targetLat, targetLong);
