@@ -91,7 +91,7 @@ app.post("/host", async (req, res) => {});
 
 app.post("/", async (req, res) => {
   // Logging
-  console.log(req.body);
+  // console.log(req.body);
 
   // Bad Request
   if (!req.body.Game) {
@@ -99,7 +99,7 @@ app.post("/", async (req, res) => {
   }
 
   // Logging
-  console.log(games);
+  // console.log(games);
 
   // Start Game Request
   if (!req.body.Player) {
@@ -136,6 +136,16 @@ function makeid(length) {
   return result;
 }
 
+function startGame(code, delay, res) {
+  if (code in games) {
+    if (games[code].GameStarted) return sendError(res, "Game already started.");
+    else {
+      setupGame(code, delay);
+      return res.send({ GameStarted: true });
+    }
+  } else return sendError(res, "Game does not exist.");
+}
+
 function setupGame(code, delay) {
   // Basic setup
   let game = games[code];
@@ -147,8 +157,10 @@ function setupGame(code, delay) {
   const player_count = game.PlayerList.length;
   game.PlayersAlive = player_count;
 
-  // Pick a random number between 0 and the number of players
-  const offset = Math.floor(Math.random() * (player_count - 1)) + 1;
+  // Randomly shuffle the array of players
+  console.log(game.PlayerList);
+  shuffle(game.PlayerList);
+  console.log(game.PlayerList);
 
   // Generate the players and give them targets
   for (let i = 0; i < player_count; i++) {
@@ -157,7 +169,7 @@ function setupGame(code, delay) {
     let player = game.Players[player_name];
     player.Living = true;
     player.Kills = 0;
-    player.Target = game.PlayerList[(i + offset) % player_count];
+    player.Target = game.PlayerList[(i + 1) % player_count];
     player.Latitude = 0;
     player.Longitude = 0;
     player.Timestamp = 0;
@@ -165,44 +177,11 @@ function setupGame(code, delay) {
   }
 }
 
-function LobbyHeartbeat(code, name, res) {
-  // Confirm valid game
-  if (!(code in games)) {
-    return sendError(res, "Game does not exist.");
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
   }
-  game = games[code];
-  // New player
-  if (!game.PlayerList.includes(name)) {
-    // New player trying to join game that already started
-    if (game.GameStarted) {
-      return sendError(res, "Cannot join in-progress game.");
-    }
-    // New player joining lobby
-    else {
-      game.PlayerList.push(name);
-      return res.send({
-        Players: game.PlayerList,
-        GameStarted: game.GameStarted,
-      });
-    }
-  }
-  // Player in lobby
-  else {
-    return res.send({
-      Players: game.PlayerList,
-      GameStarted: game.GameStarted,
-    });
-  }
-}
-
-function startGame(code, delay, res) {
-  if (code in games) {
-    if (games[code].GameStarted) return sendError(res, "Game already started.");
-    else {
-      setupGame(code, delay);
-      return res.send({ GameStarted: true });
-    }
-  } else return sendError(res, "Game does not exist.");
 }
 
 function InGameHeartbeat(code, name, lat, long, res) {
@@ -214,10 +193,9 @@ function InGameHeartbeat(code, name, lat, long, res) {
   if (!game.GameStarted) return sendError(res, "Game not yet started.");
 
   // Logging
-  console.log(typeof game.Players);
-  for (let [key, value] of Object.entries(game.Players)) {
-    console.log(key, value);
-  }
+  // for (let [key, value] of Object.entries(game.Players)) {
+  //   console.log(key, value);
+  // }
 
   // Get player status
   let players = game.Players;
@@ -225,64 +203,83 @@ function InGameHeartbeat(code, name, lat, long, res) {
   const living = player.Living;
 
   // Check if game is over, if so stop and send game over data
-  if (game.GameEnded) {
+  if (game.GameOver) {
     return gameOver(game, player, res);
-  }
+  } else {
+    // Update player data
+    player.Latitude = lat;
+    player.Longitude = long;
+    let timestamp = new Date();
+    player.Timestamp = timestamp;
 
-  // Update player data
-  player.Latitude = lat;
-  player.Longitude = long;
-  let timestamp = new Date();
-  player.Timestamp = timestamp;
+    // Get target data
+    let targetName = player.Target;
+    let target = players[targetName];
+    let targetLat = target.Latitude;
+    let targetLong = target.Longitude;
+    let targetTimestamp = target.Timestamp;
 
-  // Get target data
-  let targetName = player.Target;
-  let target = players[targetName];
-  let targetLat = target.Latitude;
-  let targetLong = target.Longitude;
-  let targetTimestamp = target.Timestamp;
+    // Attempt assassination
+    console.log("Timestamp: ", timestamp);
+    console.log("Kill Start: ", game.KillStartTime);
+    console.log(timestamp > game.KillStartTime);
+    if (
+      target.Latitude != 0 &&
+      timestamp > game.KillStartTime &&
+      target.Target != name
+    ) {
+      // Calculate kill distance based on time since target update
+      const targetVulnerableRange = (timestamp - targetTimestamp) / 150;
+      const killDistance = 10 + targetVulnerableRange;
 
-  // Attempt assassination
-  console.log("Timestamp: ", timestamp);
-  console.log("Kill Start: ", game.KillStartTime);
-  console.log(timestamp > game.KillStartTime);
-  if (target.Latitude != 0 && timestamp > game.KillStartTime) {
-    // Calculate kill distance based on time since target update
-    const targetVulnerableRange = (timestamp - targetTimestamp) / 150;
-    const killDistance = 10 + targetVulnerableRange;
+      // Calculate distance to target
+      const targetDistance = haversine(lat, long, targetLat, targetLong);
 
-    // Calculate distance to target
-    const targetDistance = haversine(lat, long, targetLat, targetLong);
+      // console.log("Player:", lat, long, timestamp);
+      // console.log("Target:", targetLat, targetLong, targetTimestamp);
+      // console.log("Target Vulnerable Range:", targetVulnerableRange);
+      // console.log("Kill Distance:", killDistance);
+      // console.log("Target Distance:", targetDistance);
 
-    console.log("Player:", lat, long, timestamp);
-    console.log("Target:", targetLat, targetLong, targetTimestamp);
-    console.log("Target Vulnerable Range:", targetVulnerableRange);
-    console.log("Kill Distance:", killDistance);
-    console.log("Target Distance:", targetDistance);
+      // If successful
+      if (targetDistance < killDistance) {
+        // Update target status and living player count
+        console.log(name, "killed", targetName);
+        target.Living = false;
+        player.Kills += 1;
+        game.PlayersAlive -= 1;
 
-    // If successful
-    if (targetDistance < killDistance) {
-      // Update target status and living player count
-      target.Living = false;
-      player.Kills += 1;
-      game.PlayersAlive -= 1;
-
-      // If no more living players
-      if (game.PlayersAlive < 2) {
-        // End game, set winner and final scores
-        game.GameOver = true;
-        let results = {};
-        for (let [key, value] of Object.entries(players)) {
-          if (value.Living) {
-            game.LastStanding = key;
+        // If no more living players
+        if (game.PlayersAlive < 2) {
+          // End game, set winner and final scores
+          game.GameOver = true;
+          let results = {};
+          for (let [key, value] of Object.entries(players)) {
+            if (value.Living) {
+              game.LastStanding = key;
+            }
+            results[key] = value.Kills;
           }
-          results[key] = value.Kills;
+          game.FinalScores = results;
+          // Point all players at the winner
+          console.log("Game Over");
+          for (let [key, value] of Object.entries(players)) {
+            value.Target = game.LastStanding;
+            console.log(key, "assigned", game.LastStanding);
+          }
+          return gameOver(game, player, res);
+        } else {
+          // Assign next target
+          const newTarget = target.Target;
+          player.Target = newTarget;
+          console.log(name, "assigned", newTarget);
+          for (let [key, value] of Object.entries(players)) {
+            if (value.Target == targetName) {
+              value.Target = newTarget;
+            }
+            console.log(key, "assigned", value.Target);
+          }
         }
-        game.FinalScores = results;
-        return gameOver(game, player, res);
-      } else {
-        // Assign next target
-        player.Target = target.Target;
       }
     }
   }
@@ -322,6 +319,36 @@ function haversine(lat1, long1, lat2, long2) {
       Math.sin(deltaLong / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
+}
+
+function LobbyHeartbeat(code, name, res) {
+  // Confirm valid game
+  if (!(code in games)) {
+    return sendError(res, "Game does not exist.");
+  }
+  game = games[code];
+  // New player
+  if (!game.PlayerList.includes(name)) {
+    // New player trying to join game that already started
+    if (game.GameStarted) {
+      return sendError(res, "Cannot join in-progress game.");
+    }
+    // New player joining lobby
+    else {
+      game.PlayerList.push(name);
+      return res.send({
+        Players: game.PlayerList,
+        GameStarted: game.GameStarted,
+      });
+    }
+  }
+  // Player in lobby
+  else {
+    return res.send({
+      Players: game.PlayerList,
+      GameStarted: game.GameStarted,
+    });
+  }
 }
 
 function sendError(res, error) {
