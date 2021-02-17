@@ -156,68 +156,64 @@ function InGameHeartbeat(code, name, lat, long, res) {
   const living = player.Living;
 
   // Check if game is over, if so stop and send game over data
-  if (game.GameOver) {
+  if (game.GameEnded) {
     return gameOver(game, player, res);
-  } else {
-    // Update player data
-    player.Latitude = lat;
-    player.Longitude = long;
-    let timestamp = new Date();
-    player.Timestamp = timestamp;
+  }
 
-    // Get target data
-    let targetName = player.Target;
-    let target = players[targetName];
-    let targetLat = target.Latitude;
-    let targetLong = target.Longitude;
-    let targetTimestamp = target.Timestamp;
+  // Update player data
+  player.Latitude = lat;
+  player.Longitude = long;
+  let timestamp = new Date();
+  player.Timestamp = timestamp;
 
-    // Attempt assassination
-    console.log("Timestamp: ", timestamp);
-    console.log("Kill Start: ", game.KillStartTime);
-    console.log(timestamp > game.KillStartTime);
-    if (
-      target.Latitude != 0 &&
-      timestamp > game.KillStartTime &&
-      target.Target != name
-    ) {
-      // Calculate kill distance based on time since target update
-      const targetVulnerableRange = (timestamp - targetTimestamp) / 150;
-      const killDistance = 10 + targetVulnerableRange;
+  // Get target data
+  let targetName = player.Target;
+  let target = players[targetName];
+  let targetLat = target.Latitude;
+  let targetLong = target.Longitude;
+  let targetTimestamp = target.Timestamp;
 
-      // Calculate distance to target
-      const targetDistance = haversine(lat, long, targetLat, targetLong);
+  // Attempt assassination
+  console.log("Timestamp: ", timestamp);
+  console.log("Kill Start: ", game.KillStartTime);
+  console.log(timestamp > game.KillStartTime);
+  if (target.Latitude != 0 && timestamp > game.KillStartTime) {
+    // Calculate kill distance based on time since target update
+    const targetVulnerableRange = (timestamp - targetTimestamp) / 150;
+    const killDistance = 10 + targetVulnerableRange;
 
-      console.log("Player:", lat, long, timestamp);
-      console.log("Target:", targetLat, targetLong, targetTimestamp);
-      console.log("Target Vulnerable Range:", targetVulnerableRange);
-      console.log("Kill Distance:", killDistance);
-      console.log("Target Distance:", targetDistance);
+    // Calculate distance to target
+    const targetDistance = haversine(lat, long, targetLat, targetLong);
 
-      // If successful
-      if (targetDistance < killDistance) {
-        // Update target status and living player count
-        target.Living = false;
-        player.Kills += 1;
-        game.PlayersAlive -= 1;
+    console.log("Player:", lat, long, timestamp);
+    console.log("Target:", targetLat, targetLong, targetTimestamp);
+    console.log("Target Vulnerable Range:", targetVulnerableRange);
+    console.log("Kill Distance:", killDistance);
+    console.log("Target Distance:", targetDistance);
 
-        // If no more living players
-        if (game.PlayersAlive < 2) {
-          // End game, set winner and final scores
-          game.GameOver = true;
-          let results = {};
-          for (let [key, value] of Object.entries(players)) {
-            if (value.Living) {
-              game.LastStanding = key;
-            }
-            results[key] = value.Kills;
+    // If successful
+    if (targetDistance < killDistance) {
+      // Update target status and living player count
+      target.Living = false;
+      player.Kills += 1;
+      game.PlayersAlive -= 1;
+
+      // If no more living players
+      if (game.PlayersAlive < 2) {
+        // End game, set winner and final scores
+        game.GameOver = true;
+        let results = {};
+        for (let [key, value] of Object.entries(players)) {
+          if (value.Living) {
+            game.LastStanding = key;
           }
-          game.FinalScores = results;
-          return gameOver(game, player, res);
-        } else {
-          // Assign next target
-          player.Target = target.Target;
+          results[key] = value.Kills;
         }
+        game.FinalScores = results;
+        return gameOver(game, player, res);
+      } else {
+        // Assign next target
+        player.Target = target.Target;
       }
     }
   }
