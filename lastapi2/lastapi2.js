@@ -52,7 +52,7 @@ app.get("/", async (req, res) => {
 
 app.post("/", async (req, res) => {
   // Logging
-  console.log(req.body);
+  // console.log(req.body);
 
   // Bad Request
   if (!req.body.Game) {
@@ -60,7 +60,7 @@ app.post("/", async (req, res) => {
   }
 
   // Logging
-  console.log(games);
+  // console.log(games);
 
   // Start Game Request
   if (!req.body.Player) {
@@ -118,8 +118,10 @@ function setupGame(code, delay) {
   const player_count = game.PlayerList.length;
   game.PlayersAlive = player_count;
 
-  // Pick a random number between 0 and the number of players
-  const offset = Math.floor(Math.random() * (player_count - 1)) + 1;
+  // Randomly shuffle the array of players
+  console.log(game.PlayerList);
+  shuffle(game.PlayerList);
+  console.log(game.PlayerList);
 
   // Generate the players and give them targets
   for (let i = 0; i < player_count; i++) {
@@ -128,11 +130,18 @@ function setupGame(code, delay) {
     let player = game.Players[player_name];
     player.Living = true;
     player.Kills = 0;
-    player.Target = game.PlayerList[(i + offset) % player_count];
+    player.Target = game.PlayerList[(i + 1) % player_count];
     player.Latitude = 0;
     player.Longitude = 0;
     player.Timestamp = 0;
     console.log(player);
+  }
+}
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
   }
 }
 
@@ -145,10 +154,9 @@ function InGameHeartbeat(code, name, lat, long, res) {
   if (!game.GameStarted) return sendError(res, "Game not yet started.");
 
   // Logging
-  console.log(typeof game.Players);
-  for (let [key, value] of Object.entries(game.Players)) {
-    console.log(key, value);
-  }
+  // for (let [key, value] of Object.entries(game.Players)) {
+  //   console.log(key, value);
+  // }
 
   // Get player status
   let players = game.Players;
@@ -188,15 +196,16 @@ function InGameHeartbeat(code, name, lat, long, res) {
       // Calculate distance to target
       const targetDistance = haversine(lat, long, targetLat, targetLong);
 
-      console.log("Player:", lat, long, timestamp);
-      console.log("Target:", targetLat, targetLong, targetTimestamp);
-      console.log("Target Vulnerable Range:", targetVulnerableRange);
-      console.log("Kill Distance:", killDistance);
-      console.log("Target Distance:", targetDistance);
+      // console.log("Player:", lat, long, timestamp);
+      // console.log("Target:", targetLat, targetLong, targetTimestamp);
+      // console.log("Target Vulnerable Range:", targetVulnerableRange);
+      // console.log("Kill Distance:", killDistance);
+      // console.log("Target Distance:", targetDistance);
 
       // If successful
       if (targetDistance < killDistance) {
         // Update target status and living player count
+        console.log(name, "killed", targetName);
         target.Living = false;
         player.Kills += 1;
         game.PlayersAlive -= 1;
@@ -213,10 +222,24 @@ function InGameHeartbeat(code, name, lat, long, res) {
             results[key] = value.Kills;
           }
           game.FinalScores = results;
+          // Point all players at the winner
+          console.log("Game Over");
+          for (let [key, value] of Object.entries(players)) {
+            value.Target = game.LastStanding;
+            console.log(key, "assigned", game.LastStanding);
+          }
           return gameOver(game, player, res);
         } else {
           // Assign next target
-          player.Target = target.Target;
+          const newTarget = target.Target;
+          player.Target = newTarget;
+          console.log(name, "assigned", newTarget);
+          for (let [key, value] of Object.entries(players)) {
+            if (value.Target == targetName) {
+              value.Target = newTarget;
+            }
+            console.log(key, "assigned", value.Target);
+          }
         }
       }
     }
