@@ -10,9 +10,15 @@ games = {};
 /*
 Games = {
     GameCode: {
+        Host: string
+        Mode: string
+        Delay: float
+        AttemptCD: float
+        KillCD: float
+        KillDistance: float
+        LagDistance: float
         PlayerList: [strings]
         GameStarted: boolean
-        KillStartTime: datetime
         Players: {
             PlayerName: {
                 Living: boolean
@@ -21,6 +27,12 @@ Games = {
                 Latitude: float
                 Longitude: float
                 Timestamp: datetime
+                Pending Attempts: [
+                  {
+                    Hunter: string
+                    Timestamp: datetime
+                  }
+                ]
             }, ...
         }
         PlayersAlive: int
@@ -40,15 +52,42 @@ app.use(
   })
 );
 
-app.get("/", async (req, res) => {
-  const code = makeid(5);
-  games[code] = {};
-  games[code].GameStarted = false;
-  games[code].PlayerList = [];
-  return res.send({
-    Game: code,
-  });
+app.post("/create", async (req, res) => {
+  if (!req.body.Host) {
+    return sendError(res, "Host is required.");
+  } else {
+    const host = req.body.Host;
+    const code = makeid(5);
+    let game = createGame(host, code);
+    return res.send({
+      Game: code,
+      Mode: game.Mode,
+      Delay: game.Delay,
+      AttemptCD: game.AttemptCD,
+      KillCD: game.KillCD,
+      KillDistance: game.KillDistance,
+      LagDistance: game.LagDistance,
+    });
+  }
 });
+
+function createGame(host, code) {
+  games[code] = {};
+  let game = games[code];
+  game.GameStarted = false;
+  game.Host = host;
+  game.PlayerList = [];
+  game.PlayerList.push(host);
+  game.Mode = "Manual";
+  game.Delay = 30;
+  game.AttemptCD = 5;
+  game.KillCD = 20;
+  game.KillDistance = 10;
+  game.LagDistance = 3;
+  return game;
+}
+
+app.post("/host", async (req, res) => {});
 
 app.post("/", async (req, res) => {
   // Logging
@@ -97,16 +136,6 @@ function makeid(length) {
   return result;
 }
 
-function startGame(code, delay, res) {
-  if (code in games) {
-    if (games[code].GameStarted) return sendError(res, "Game already started.");
-    else {
-      setupGame(code, delay);
-      return res.send({ GameStarted: true });
-    }
-  } else return sendError(res, "Game does not exist.");
-}
-
 function setupGame(code, delay) {
   // Basic setup
   let game = games[code];
@@ -134,6 +163,46 @@ function setupGame(code, delay) {
     player.Timestamp = 0;
     console.log(player);
   }
+}
+
+function LobbyHeartbeat(code, name, res) {
+  // Confirm valid game
+  if (!(code in games)) {
+    return sendError(res, "Game does not exist.");
+  }
+  game = games[code];
+  // New player
+  if (!game.PlayerList.includes(name)) {
+    // New player trying to join game that already started
+    if (game.GameStarted) {
+      return sendError(res, "Cannot join in-progress game.");
+    }
+    // New player joining lobby
+    else {
+      game.PlayerList.push(name);
+      return res.send({
+        Players: game.PlayerList,
+        GameStarted: game.GameStarted,
+      });
+    }
+  }
+  // Player in lobby
+  else {
+    return res.send({
+      Players: game.PlayerList,
+      GameStarted: game.GameStarted,
+    });
+  }
+}
+
+function startGame(code, delay, res) {
+  if (code in games) {
+    if (games[code].GameStarted) return sendError(res, "Game already started.");
+    else {
+      setupGame(code, delay);
+      return res.send({ GameStarted: true });
+    }
+  } else return sendError(res, "Game does not exist.");
 }
 
 function InGameHeartbeat(code, name, lat, long, res) {
@@ -253,36 +322,6 @@ function haversine(lat1, long1, lat2, long2) {
       Math.sin(deltaLong / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
-}
-
-function LobbyHeartbeat(code, name, res) {
-  // Confirm valid game
-  if (!(code in games)) {
-    return sendError(res, "Game does not exist.");
-  }
-  game = games[code];
-  // New player
-  if (!game.PlayerList.includes(name)) {
-    // New player trying to join game that already started
-    if (game.GameStarted) {
-      return sendError(res, "Cannot join in-progress game.");
-    }
-    // New player joining lobby
-    else {
-      game.PlayerList.push(name);
-      return res.send({
-        Players: game.PlayerList,
-        GameStarted: game.GameStarted,
-      });
-    }
-  }
-  // Player in lobby
-  else {
-    return res.send({
-      Players: game.PlayerList,
-      GameStarted: game.GameStarted,
-    });
-  }
 }
 
 function sendError(res, error) {

@@ -6,57 +6,39 @@ function Create() {
   const request = {
     Host: host,
   };
-  fetch(api_url + "create", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(request),
-  })
-    .then((response) => {
-      console.log("Response: ", response);
-      return response.json();
-    })
-    .then((data) => {
-      document.getElementById("create_result").innerHTML = JSON.stringify(data);
-      // Set other game code inputs to this code.
-      console.log(data);
-      document.getElementById("scode").value = data.Game;
-      document.getElementById("lcode").value = data.Game;
-      document.getElementById("code").value = data.Game;
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
+  call(request, "create", "create_result");
+}
+
+function Host() {
+  const code = document.getElementById("hcode").value;
+  const name = document.getElementById("lname").value;
+  const mode = document.getElementById("mode").value;
+  const delay = document.getElementById("delay").value;
+  const attempt_cd = document.getElementById("attempt_cd").value;
+  const kill_cd = document.getElementById("kill_cd").value;
+  const kill_distance = document.getElementById("kill_distance").value;
+  const lag_distance = document.getElementById("lag_distance").value;
+  const request = {
+    Game: code,
+    Player: name,
+    Mode: mode,
+    Delay: delay,
+    AttemptCD: attempt_cd,
+    KillCD: kill_cd,
+    KillDistance: kill_distance,
+    LagDistance: lag_distance,
+  };
+  call(request, "host", "host_result");
 }
 
 function Lobby() {
   const code = document.getElementById("lcode").value;
   const name = document.getElementById("lname").value;
-  document.getElementById("name").value = name;
   const request = {
     Game: code,
     Player: name,
   };
-  fetch(api_url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(request),
-  })
-    .then((response) => {
-      console.log("Response: ", response);
-      return response.json();
-    })
-    .then((data) => {
-      document.getElementById("lobby_result").innerHTML = JSON.stringify(data);
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
+  call(request, "lobby", "lobby_result");
 }
 
 function Start() {
@@ -66,24 +48,7 @@ function Start() {
     Game: code,
     Player: name,
   };
-  fetch(api_url + "start", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(request),
-  })
-    .then((response) => {
-      console.log("Response: ", response);
-      return response.json();
-    })
-    .then((data) => {
-      document.getElementById("start_result").innerHTML = JSON.stringify(data);
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
+  call(request, "start", "start_result");
 }
 
 function Game() {
@@ -97,7 +62,33 @@ function Game() {
     Latitude: lat,
     Longitude: long,
   };
-  fetch(api_url, {
+  call(request, "game", "game_result");
+}
+
+function Kill() {
+  const code = document.getElementById("acode").value;
+  const name = document.getElementById("aname").value;
+  const request = {
+    Game: code,
+    Player: name,
+  };
+  call(request, "kill", "kill_result");
+}
+
+function Verify() {
+  const code = document.getElementById("vcode").value;
+  const name = document.getElementById("vname").value;
+  const hunter = document.getElementById("hunter").value;
+  const verify = document.getElementById("verify").value;
+  const request = {
+    Game: code,
+    Player: name,
+  };
+  call(request, "verify", "verify_result");
+}
+
+function call(request, route, result) {
+  fetch(api_url + route, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -110,7 +101,7 @@ function Game() {
       return response.json();
     })
     .then((data) => {
-      document.getElementById("game_result").innerHTML = JSON.stringify(data);
+      document.getElementById(result).innerHTML = JSON.stringify(data);
     })
     .catch((error) => {
       console.error("Error:", error);

@@ -5,86 +5,99 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <h2>Create Game</h2>
+    <div class="column">
+      <h2>Create Game</h2>
 
-    <label for="host">Host Name:</label>
-    <input type="text" id="host" name="host" /><br /><br />
-    <button onclick="Create()">Send</button>
-    <p id="create_result">Results will go here.</p>
+      <label for="host">Host Name:</label>
+      <input type="text" id="host" name="host" /><br /><br />
+      <button onclick="Create()">Send</button>
+      <p id="create_result">Results will go here.</p>
 
-    <h2>Lobby Host Heartbeat</h2>
+      <h2>Lobby Host Heartbeat</h2>
 
-    <label for="hcode">Game Code:</label>
-    <input type="text" id="lcode" name="lcode" /><br /><br />
-    <label for="hname">Player Name:</label>
-    <input type="text" id="hname" name="hname" /><br /><br />
-    <label for="mode">Game Mode:</label>
-    <select name="mode" id="mode">
-      <option value="auto">Auto</option>
-      <option value="manual">Manual</option>
-      <option value="honor">Honor</option>
-    </select>
-    <label for="delay">Start Delay:</label>
-    <input type="number" id="delay" name="delay" /><br /><br />
-    <label for="attempt_cd">Kill Attempt Cooldown:</label>
-    <input type="number" id="attempt_cd" name="attempt_cd" /><br /><br />
-    <label for="kill_cd">Kill Cooldown:</label>
-    <input type="number" id="kill_cd" name="kill_cd" /><br /><br />
-    <label for="kill_distance">Kill Distance:</label>
-    <input type="number" id="kill_distance" name="kill_distance" /><br /><br />
-    <label for="lag_distance">Lag Distance:</label>
-    <input type="number" id="lag_distance" name="lag_distance" /><br /><br />
-    <button onclick="LobbyHost()">Send</button>
-    <p id="lobby_host_result">Results will go here.</p>
+      <label for="hcode">Game Code:</label>
+      <input type="text" id="hcode" name="hcode" /><br /><br />
+      <label for="hname">Player Name:</label>
+      <input type="text" id="hname" name="hname" /><br /><br />
+      <label for="mode">Game Mode:</label>
+      <select name="mode" id="mode">
+        <option value="auto">Auto</option>
+        <option value="manual">Manual</option>
+        <option value="honor">Honor</option>
+      </select>
+      <br /><br />
+      <label for="delay">Start Delay:</label>
+      <input type="number" id="delay" name="delay" /><br /><br />
+      <label for="attempt_cd">Kill Attempt Cooldown:</label>
+      <input type="number" id="attempt_cd" name="attempt_cd" /><br /><br />
+      <label for="kill_cd">Kill Cooldown:</label>
+      <input type="number" id="kill_cd" name="kill_cd" /><br /><br />
+      <label for="kill_distance">Kill Distance:</label>
+      <input
+        type="number"
+        id="kill_distance"
+        name="kill_distance"
+      /><br /><br />
+      <label for="lag_distance">Lag Distance:</label>
+      <input type="number" id="lag_distance" name="lag_distance" /><br /><br />
+      <button onclick="Host()">Send</button>
+      <p id="host_result">Results will go here.</p>
 
-    <h2>Lobby Player Heartbeat</h2>
+      <h2>Lobby Player Heartbeat</h2>
 
-    <label for="lcode">Game Code:</label>
-    <input type="text" id="lcode" name="lcode" /><br /><br />
-    <label for="lname">Player Name:</label>
-    <input type="text" id="lname" name="lname" /><br /><br />
-    <button onclick="LobbyPlayer()">Send</button>
-    <p id="lobby_player_result">Results will go here.</p>
+      <label for="lcode">Game Code:</label>
+      <input type="text" id="lcode" name="lcode" /><br /><br />
+      <label for="lname">Player Name:</label>
+      <input type="text" id="lname" name="lname" /><br /><br />
+      <button onclick="Lobby()">Send</button>
+      <p id="lobby_result">Results will go here.</p>
+    </div>
 
-    <h2>Start Game</h2>
+    <div class="column">
+      <h2>Start Game</h2>
 
-    <label for="scode">Game Code:</label>
-    <input type="text" id="scode" name="scode" /><br /><br />
-    <label for="sname">Player Name:</label>
-    <input type="number" id="sname" name="sname" /><br /><br />
-    <button onclick="Start()">Send</button>
-    <p id="start_result">Results will go here.</p>
+      <label for="scode">Game Code:</label>
+      <input type="text" id="scode" name="scode" /><br /><br />
+      <label for="sname">Player Name:</label>
+      <input type="number" id="sname" name="sname" /><br /><br />
+      <button onclick="Start()">Send</button>
+      <p id="start_result">Results will go here.</p>
 
-    <h2>In-Game Heartbeat</h2>
+      <h2>In-Game Heartbeat</h2>
 
-    <label for="code">Game Code:</label>
-    <input type="text" id="code" name="code" /><br /><br />
-    <label for="name">Player Name:</label>
-    <input type="text" id="name" name="name" /><br /><br />
-    <label for="lat">Latitude:</label>
-    <input type="number" id="lat" name="lat" value=".0005" /><br /><br />
-    <label for="long">Longitude:</label>
-    <input type="number" id="long" name="long" value=".0005" /><br /><br />
-    <button onclick="Game()">Send</button>
-    <p id="game_result">Results will go here.</p>
+      <label for="code">Game Code:</label>
+      <input type="text" id="code" name="code" /><br /><br />
+      <label for="name">Player Name:</label>
+      <input type="text" id="name" name="name" /><br /><br />
+      <label for="lat">Latitude:</label>
+      <input type="number" id="lat" name="lat" value=".0005" /><br /><br />
+      <label for="long">Longitude:</label>
+      <input type="number" id="long" name="long" value=".0005" /><br /><br />
+      <button onclick="Game()">Send</button>
+      <p id="game_result">Results will go here.</p>
 
-    <h2>Attempt Kill</h2>
+      <h2>Attempt Kill</h2>
 
-    <label for="acode">Game Code:</label>
-    <input type="text" id="acode" name="acode" /><br /><br />
-    <label for="aname">Player Name:</label>
-    <input type="text" id="aname" name="aname" /><br /><br />
-    <button onclick="AttemptKill()">Send</button>
-    <p id="attempt_kill_result">Results will go here.</p>
+      <label for="acode">Game Code:</label>
+      <input type="text" id="acode" name="acode" /><br /><br />
+      <label for="aname">Player Name:</label>
+      <input type="text" id="aname" name="aname" /><br /><br />
+      <button onclick="Kill()">Send</button>
+      <p id="kill_result">Results will go here.</p>
 
-    <h2>Verify Kill</h2>
+      <h2>Verify Kill</h2>
 
-    <label for="vcode">Game Code:</label>
-    <input type="text" id="vcode" name="vcode" /><br /><br />
-    <label for="vname">Player Name:</label>
-    <input type="text" id="vname" name="vname" /><br /><br />
-    <button onclick="VerifyKill()">Send</button>
-    <p id="verify_kill_result">Results will go here.</p>
+      <label for="vcode">Game Code:</label>
+      <input type="text" id="vcode" name="vcode" /><br /><br />
+      <label for="vname">Player Name:</label>
+      <input type="text" id="vname" name="vname" /><br /><br />
+      <label for="hunter">Hunter:</label>
+      <input type="text" id="hunter" name="hunter" /><br /><br />
+      <label for="verify">Verify:</label>
+      <input type="checkbox" id="verify" name="verify" /><br /><br />
+      <button onclick="Verify()">Send</button>
+      <p id="verify_result">Results will go here.</p>
+    </div>
 
     <script src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
     <script src="script3.js"></script>
