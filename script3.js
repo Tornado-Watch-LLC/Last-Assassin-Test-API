@@ -1,5 +1,5 @@
-//const api_url = "http://lastapi.stevenrummler.com/";
-const api_url = "http://localhost:3000/";
+//const api_url = "http://api.lastassassin.app/";
+const api_url = "http://localhost:3001/";
 
 function Create() {
   const host = document.getElementById("host").value;
