@@ -44,9 +44,13 @@ function Lobby() {
 function Start() {
   const code = document.getElementById("scode").value;
   const name = document.getElementById("sname").value;
+  const lat = document.getElementById("hlat").value;
+  const long = document.getElementById("hlong").value;
   const request = {
     Game: code,
     Player: name,
+    HomeLat: lat,
+    HomeLong: long,
   };
   call(request, "start", "start_result");
 }

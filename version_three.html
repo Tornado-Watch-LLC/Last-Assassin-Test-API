@@ -28,16 +28,12 @@
       <br /><br />
       <label for="delay">Start Delay:</label>
       <input type="number" id="delay" name="delay" /><br /><br />
-      <label for="attempt_cd">Kill Attempt Cooldown:</label>
+      <label for="attempt_cd">Tag Attempt Cooldown:</label>
       <input type="number" id="attempt_cd" name="attempt_cd" /><br /><br />
-      <label for="kill_cd">Kill Cooldown:</label>
-      <input type="number" id="kill_cd" name="kill_cd" /><br /><br />
-      <label for="kill_distance">Kill Distance:</label>
-      <input
-        type="number"
-        id="kill_distance"
-        name="kill_distance"
-      /><br /><br />
+      <label for="tag_cd">Tag Cooldown:</label>
+      <input type="number" id="tag_cd" name="tag_cd" /><br /><br />
+      <label for="tag_distance">Tag Distance:</label>
+      <input type="number" id="tag_distance" name="tag_distance" /><br /><br />
       <label for="lag_distance">Lag Distance:</label>
       <input type="number" id="lag_distance" name="lag_distance" /><br /><br />
       <button onclick="Host()">Send</button>
@@ -60,6 +56,10 @@
       <input type="text" id="scode" name="scode" /><br /><br />
       <label for="sname">Player Name:</label>
       <input type="number" id="sname" name="sname" /><br /><br />
+      <label for="hlat">Home Latitude:</label>
+      <input type="number" id="hlat" name="hlat" /><br /><br />
+      <label for="hlong">Home Longitude:</label>
+      <input type="number" id="hlong" name="hlong" /><br /><br />
       <button onclick="Start()">Send</button>
       <p id="start_result">Results will go here.</p>
 
@@ -76,16 +76,16 @@
       <button onclick="Game()">Send</button>
       <p id="game_result">Results will go here.</p>
 
-      <h2>Attempt Kill</h2>
+      <h2>Attempt Tag</h2>
 
       <label for="acode">Game Code:</label>
       <input type="text" id="acode" name="acode" /><br /><br />
       <label for="aname">Player Name:</label>
       <input type="text" id="aname" name="aname" /><br /><br />
-      <button onclick="Kill()">Send</button>
-      <p id="kill_result">Results will go here.</p>
+      <button onclick="Tag()">Send</button>
+      <p id="tag_result">Results will go here.</p>
 
-      <h2>Verify Kill</h2>
+      <h2>Verify Tag</h2>
 
       <label for="vcode">Game Code:</label>
       <input type="text" id="vcode" name="vcode" /><br /><br />
