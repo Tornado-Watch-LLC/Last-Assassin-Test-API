@@ -121,21 +121,21 @@ app.post("/host", async (req, res) => {
     }
   }
   if (req.body.Delay) {
-    if (req.body.Delay > 0 && req.body.Delay < 3600) {
+    if (req.body.Delay >= 0 && req.body.Delay < 3600) {
       game.Delay = req.body.Delay;
     } else {
       return sendError(res, "Invalid setting value.");
     }
   }
   if (req.body.AttemptCD) {
-    if (req.body.AttemptCD > 0 && req.body.AttemptCD < 3600) {
+    if (req.body.AttemptCD >= 0 && req.body.AttemptCD < 3600) {
       game.AttemptCD = req.body.AttemptCD;
     } else {
       return sendError(res, "Invalid setting value.");
     }
   }
   if (req.body.TagCD) {
-    if (req.body.TagCD > 0 && req.body.TagCD < 3600) {
+    if (req.body.TagCD >= 0 && req.body.TagCD < 3600) {
       game.TagCD = req.body.TagCD;
     } else {
       return sendError(res, "Invalid setting value.");

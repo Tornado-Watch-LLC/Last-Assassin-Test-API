@@ -1,5 +1,5 @@
-//const api_url = "http://api.lastassassin.app/";
-const api_url = "http://localhost:3001/";
+const api_url = "https://api.lastassassin.app/";
+//const api_url = "http://localhost:3001/";
 
 function Create() {
   const host = document.getElementById("host").value;
