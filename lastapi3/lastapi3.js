@@ -379,7 +379,7 @@ app.post("/tag", async (req, res) => {
     let target = game.Players[player.Target];
     if (target.PendingAttempts.includes(req.body.Player)) {
       player.AttemptStatus = "Pending";
-      return sendError("Previous attempt still pending.");
+      return sendError(res, "Previous attempt still pending.");
     } else {
       target.PendingAttempts.push(req.body.Player);
       player.AttemptStatus = "Pending";
@@ -524,7 +524,7 @@ function haversine(lat1, long1, lat2, long2) {
 }
 
 function sendError(res, error) {
-  return res.status(200).send({
+  return res.send({
     Error: error,
   });
 }
