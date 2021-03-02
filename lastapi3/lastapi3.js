@@ -371,7 +371,7 @@ app.post("/tag", async (req, res) => {
     if (ProximityCheck(game, player)) {
       processTag(game, player);
     }
-    return res.send();
+    return res.send({});
   }
   if (game.Mode == "Honor") {
     let target = game.Players[player.Target];
@@ -417,7 +417,7 @@ app.post("/verify", async (req, res) => {
   if (req.body.Accept) {
     hunter.AttemptStatus = "Accepted";
     processTag(game, hunter);
-    return res.send();
+    return res.send({});
   } else {
     player.PendingAttempts = player.PendingAttempts.filter(
       (value, index, arr) => {
@@ -425,7 +425,7 @@ app.post("/verify", async (req, res) => {
       }
     );
     hunter.AttemptStatus = "Rejected";
-    return res.send();
+    return res.send({});
   }
 });
 
