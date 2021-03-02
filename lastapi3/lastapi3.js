@@ -225,10 +225,11 @@ app.post("/start", async (req, res) => {
   game.HomeLat = req.body.HomeLat;
   game.HomeLong = req.body.HomeLong;
 
-  return startGame(game, res);
+  startGame(game);
+  return res.sendStatus(200);
 });
 
-function startGame(game, res) {
+function startGame(game) {
   // Basic setup
   game.GameStarted = true;
   let now = new Date();
