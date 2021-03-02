@@ -226,7 +226,7 @@ app.post("/start", async (req, res) => {
   game.HomeLong = req.body.HomeLong;
 
   startGame(game);
-  return res.sendStatus(200);
+  return res.send({});
 });
 
 function startGame(game) {

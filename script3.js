@@ -52,6 +52,7 @@ function Start() {
     HomeLat: lat,
     HomeLong: long,
   };
+  console.log(request);
   call(request, "start", "start_result");
 }
 
@@ -87,6 +88,8 @@ function Verify() {
   const request = {
     Game: code,
     Player: name,
+    Hunter: hunter,
+    Accept: verify,
   };
   call(request, "verify", "verify_result");
 }
