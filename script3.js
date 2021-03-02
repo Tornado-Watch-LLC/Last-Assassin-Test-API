@@ -1,5 +1,5 @@
-const api_url = "https://api.lastassassin.app/";
-//const api_url = "http://localhost:3001/";
+//const api_url = "https://api.lastassassin.app/";
+const api_url = "http://localhost:3001/";
 
 function Create() {
   const host = document.getElementById("host").value;
@@ -11,21 +11,21 @@ function Create() {
 
 function Host() {
   const code = document.getElementById("hcode").value;
-  const name = document.getElementById("lname").value;
+  const name = document.getElementById("hname").value;
   const mode = document.getElementById("mode").value;
-  const delay = document.getElementById("delay").value;
-  const attempt_cd = document.getElementById("attempt_cd").value;
-  const kill_cd = document.getElementById("kill_cd").value;
-  const kill_distance = document.getElementById("kill_distance").value;
-  const lag_distance = document.getElementById("lag_distance").value;
+  const delay = document.getElementById("delay").valueAsNumber;
+  const attempt_cd = document.getElementById("attempt_cd").valueAsNumber;
+  const tag_cd = document.getElementById("tag_cd").valueAsNumber;
+  const tag_distance = document.getElementById("tag_distance").valueAsNumber;
+  const lag_distance = document.getElementById("lag_distance").valueAsNumber;
   const request = {
     Game: code,
     Player: name,
     Mode: mode,
     Delay: delay,
     AttemptCD: attempt_cd,
-    KillCD: kill_cd,
-    KillDistance: kill_distance,
+    TagCD: tag_cd,
+    TagDistance: tag_distance,
     LagDistance: lag_distance,
   };
   call(request, "host", "host_result");
@@ -44,8 +44,8 @@ function Lobby() {
 function Start() {
   const code = document.getElementById("scode").value;
   const name = document.getElementById("sname").value;
-  const lat = document.getElementById("hlat").value;
-  const long = document.getElementById("hlong").value;
+  const lat = document.getElementById("hlat").valueAsNumber;
+  const long = document.getElementById("hlong").valueAsNumber;
   const request = {
     Game: code,
     Player: name,
@@ -59,8 +59,8 @@ function Start() {
 function Game() {
   const code = document.getElementById("code").value;
   const name = document.getElementById("name").value;
-  const lat = document.getElementById("lat").value;
-  const long = document.getElementById("long").value;
+  const lat = document.getElementById("lat").valueAsNumber;
+  const long = document.getElementById("long").valueAsNumber;
   const request = {
     Game: code,
     Player: name,
@@ -70,14 +70,14 @@ function Game() {
   call(request, "game", "game_result");
 }
 
-function Kill() {
+function Tag() {
   const code = document.getElementById("acode").value;
   const name = document.getElementById("aname").value;
   const request = {
     Game: code,
     Player: name,
   };
-  call(request, "kill", "kill_result");
+  call(request, "tag", "tag_result");
 }
 
 function Verify() {
@@ -95,6 +95,7 @@ function Verify() {
 }
 
 function call(request, route, result) {
+  console.log(request);
   fetch(api_url + route, {
     method: "POST",
     headers: {

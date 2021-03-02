@@ -95,6 +95,7 @@ function createGame(host, code) {
 }
 
 app.post("/host", async (req, res) => {
+  console.log(req.body);
   // Request Validation
   if (!req.body.Game) {
     return sendError(res, "Game code is required.");
@@ -197,6 +198,7 @@ function LobbyResponse(game, res) {
 }
 
 app.post("/start", async (req, res) => {
+  console.log(req.body);
   // Request Validation
   if (!req.body.Game) {
     return sendError(res, "Game code is required.");
@@ -381,6 +383,7 @@ app.post("/tag", async (req, res) => {
     } else {
       target.PendingAttempts.push(req.body.Player);
       player.AttemptStatus = "Pending";
+      return res.send({});
     }
   }
 });
@@ -521,7 +524,7 @@ function haversine(lat1, long1, lat2, long2) {
 }
 
 function sendError(res, error) {
-  return res.status(400).send({
+  return res.status(200).send({
     Error: error,
   });
 }
