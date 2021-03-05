@@ -100,7 +100,6 @@ function createGame(host, code) {
 }
 
 app.post("/host", async (req, res) => {
-  console.log(req.body);
   // Request Validation
   if (!req.body.Game) {
     return sendError(res, "Game code is required.");
@@ -208,7 +207,6 @@ function LobbyResponse(game, res) {
 }
 
 app.post("/start", async (req, res) => {
-  console.log(req.body);
   // Request Validation
   if (!req.body.Game) {
     return sendError(res, "Game code is required.");
@@ -252,9 +250,7 @@ function startGame(game) {
   game.PlayersAlive = player_count;
 
   // Randomly shuffle the array of players
-  console.log(game.PlayerList);
   shuffle(game.PlayerList);
-  console.log(game.PlayerList);
 
   // Generate the players and give them targets
   for (let i = 0; i < player_count; i++) {
