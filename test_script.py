@@ -1,6 +1,9 @@
 import requests
+import time
 url = 'https://api.lastassassin.app/'
 #url = 'http://localhost:3001/'
+
+total_errors = 39
 
 
 def fetch(route, request):
@@ -17,6 +20,8 @@ def checkError(route, request, message):
     print('-', result['Error'])
     assert status == 200
     assert result['Error'] == message
+    global total_errors
+    total_errors -= 1
 
 
 def checkErrors(route, bad_requests, errors):
@@ -202,6 +207,13 @@ checkError('game', {
     'Longitude': 0
 }, 'Game not yet started.')
 
+# Early Tag Call
+print('Early Tag Call:')
+checkError('tag', {
+    'Game': code,
+    'Player': host,
+}, 'Game not yet started.')
+
 # Valid Start Call
 status, response = fetch('start', {
     'Game': code,
@@ -261,7 +273,59 @@ for i in range(len(players)):
         'Longitude': i
     })
     assert status == 200
-    print(response['Countdown'])
     assert response['Countdown'] < delay
     assert response['Countdown'] > 0
     print('Valid Game Call')
+
+# Early Tag Call
+print('Early Tag Call:')
+checkError('tag', {
+    'Game': code,
+    'Player': host
+}, 'Start delay not over.')
+
+# Valid Game Calls (After Countdown)
+time.sleep(3)
+for i in range(len(players)):
+    status, response = fetch('game', {
+        'Game': code,
+        'Player': players[i],
+        'Latitude': i,
+        'Longitude': i
+    })
+    assert status == 200
+    assert response['Living'] == True
+    assert response['Tags'] == 0
+    assert response['TargetName'] != players[i]
+    assert response['PlayersAlive'] == 5
+    assert response['Pending'] == []
+    assert response['Status'] == 'None'
+    print('Valid Game Call')
+
+
+## Tag ##
+print('\nTag')
+
+# Errors
+bad_requests = [
+    {}, {
+        'Game': code
+    }, {
+        'Game': 'this game does not exist',
+        'Player': host,
+        'Latitude': homelat,
+        'Longitude': homelong
+    }, {
+        'Game': code,
+        'Player': 'Not a Player',
+        'Latitude': homelat,
+        'Longitude': homelong
+    }]
+errors = [
+    'Game code is required.',
+    'Player is required.',
+    'Game does not exist.',
+    'Player not in game.']
+checkErrors('tag', bad_requests, errors)
+
+print(total_errors, 'errors to go.')

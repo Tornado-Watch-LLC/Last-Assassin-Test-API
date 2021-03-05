@@ -423,7 +423,7 @@ app.post("/verify", async (req, res) => {
     return sendError(res, "No matching tag attempt found.");
   }
   let hunter = game.Players[req.body.Hunter];
-  if (req.body.Accept) {
+  if (req.body.Accept.toLowerCase() == "true") {
     hunter.AttemptStatus = "Accepted";
     processTag(game, hunter);
     return res.status(204).send({});
