@@ -127,38 +127,41 @@ app.post("/host", async (req, res) => {
     }
   }
   if (req.body.Delay) {
-    if (req.body.Delay >= 0 && req.body.Delay < 3600) {
-      console.log(typeof req.body.Delay);
-      game.Delay = req.body.Delay;
-      console.log(typeof game.Delay);
+    const delay = parseFloat(req.body.Delay);
+    if (delay >= 0 && delay < 3600) {
+      game.Delay = delay;
     } else {
       return sendError(res, "Invalid setting value.");
     }
   }
   if (req.body.AttemptCD) {
-    if (req.body.AttemptCD >= 0 && req.body.AttemptCD < 3600) {
-      game.AttemptCD = req.body.AttemptCD;
+    const attempt_cd = parseFloat(req.body.AttemptCD);
+    if (attempt_cd >= 0 && attempt_cd < 3600) {
+      game.AttemptCD = attempt_cd;
     } else {
       return sendError(res, "Invalid setting value.");
     }
   }
   if (req.body.TagCD) {
-    if (req.body.TagCD >= 0 && req.body.TagCD < 3600) {
-      game.TagCD = req.body.TagCD;
+    const tag_cd = parseFloat(req.body.TagCD);
+    if (tag_cd >= 0 && tag_cd < 3600) {
+      game.TagCD = tag_cd;
     } else {
       return sendError(res, "Invalid setting value.");
     }
   }
   if (req.body.TagDistance) {
-    if (req.body.TagDistance > 0 && req.body.TagDistance < 1600) {
-      game.TagDistance = req.body.TagDistance;
+    const tag_distance = parseFloat(req.body.TagDistance);
+    if (tag_distance > 0 && tag_distance < 1600) {
+      game.TagDistance = tag_distance;
     } else {
       return sendError(res, "Invalid setting value.");
     }
   }
   if (req.body.LagDistance) {
-    if (req.body.LagDistance > 0 && req.body.LagDistance < 1600) {
-      game.LagDistance = req.body.LagDistance;
+    const lag_distance = parseFloat(req.body.LagDistance);
+    if (lag_distance > 0 && lag_distance < 1600) {
+      game.LagDistance = lag_distance;
     } else {
       return sendError(res, "Invalid setting value.");
     }
