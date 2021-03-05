@@ -8,6 +8,7 @@ var corsOptions = {
   optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
+app.options("*", cors());
 
 games = {};
 
