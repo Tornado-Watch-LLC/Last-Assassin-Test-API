@@ -463,7 +463,8 @@ function ProximityCheck(game, player) {
 }
 
 function processTag(game, player) {
-  let target = game.Players[player.Target];
+  let players = game.Players;
+  let target = players[player.Target];
 
   target.Living = false;
   player.Tags += 1;
@@ -489,7 +490,7 @@ function processTag(game, player) {
     // Assign next target
     const newTarget = target.Target;
     player.Target = newTarget;
-    for (let [key, value] of Object.entries(game.Players)) {
+    for (let [key, value] of Object.entries(players)) {
       if (value.Target == targetName) {
         value.Target = newTarget;
       }
