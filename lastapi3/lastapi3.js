@@ -464,7 +464,8 @@ function ProximityCheck(game, player) {
 
 function processTag(game, player) {
   let players = game.Players;
-  let target = players[player.Target];
+  let targetName = player.Target;
+  let target = players[targetName];
 
   target.Living = false;
   player.Tags += 1;
