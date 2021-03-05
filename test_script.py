@@ -31,7 +31,7 @@ a_cd = 3
 t_cd = 6
 t_dist = 5
 l_dist = 1
-players = ['Steven', 'Stefan', 'Ben', 'Trent']
+players = [host, 'Steven', 'Stefan', 'Ben', 'Trent']
 homelat = 0
 homelong = 0
 
@@ -48,7 +48,7 @@ status, response = fetch('create', {
 })
 assert status == 200
 code = response['Game']
-assert response['Players'] == [host]
+assert response['Players'] == players[:1]
 assert response['Host'] == host
 assert response['Mode'] == 'Manual'
 assert response['Delay'] == 60
@@ -90,7 +90,7 @@ status, response = fetch('host', {
     'Player': host
 })
 assert status == 200
-assert response['Players'] == [host]
+assert response['Players'] == players[:1]
 assert response['Host'] == host
 assert response['Mode'] == 'Manual'
 assert response['Delay'] == 60
@@ -146,14 +146,14 @@ checkError('start', {
     'HomeLong': homelong
 }, 'Cannot start game with fewer than 3 players.')
 
-# Valid Lobby Call
-for i in range(len(players)):
+# Valid Lobby Calls
+for i in range(1, len(players)):
     status, response = fetch('lobby', {
         'Game': code,
         'Player': players[i]
     })
     assert status == 200
-    assert response['Players'] == [host] + players[:i+1]
+    assert response['Players'] == players[:i+1]
     assert response['Host'] == host
     assert response['Mode'] == mode
     assert response['Delay'] == delay
@@ -227,3 +227,41 @@ checkError('start', {
 print('\nGame')
 
 # Errors
+bad_requests = [
+    {}, {
+        'Game': code
+    }, {
+        'Game': code,
+        'Player': host
+    }, {
+        'Game': 'this game does not exist',
+        'Player': host,
+        'Latitude': homelat,
+        'Longitude': homelong
+    }, {
+        'Game': code,
+        'Player': 'Not a Player',
+        'Latitude': homelat,
+        'Longitude': homelong
+    }]
+errors = [
+    'Game code is required.',
+    'Player is required.',
+    'Coordinates are required.',
+    'Game does not exist.',
+    'Player not in game.']
+checkErrors('game', bad_requests, errors)
+
+# Valid Game Calls (During Countdown)
+for i in range(len(players)):
+    status, response = fetch('game', {
+        'Game': code,
+        'Player': players[i],
+        'Latitude': i,
+        'Longitude': i
+    })
+    assert status == 200
+    print(response['Countdown'])
+    assert response['Countdown'] < delay
+    assert response['Countdown'] > 0
+    print('Valid Game Call')

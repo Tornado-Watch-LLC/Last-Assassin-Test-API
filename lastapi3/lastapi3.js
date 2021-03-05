@@ -301,7 +301,7 @@ app.post("/game", async (req, res) => {
   player.Longitude = req.body.Longitude;
 
   // Attempt tag in auto mode, return the relevant information
-  let countdown = game.TagStartTime - new Date();
+  let countdown = (game.TagStartTime - new Date()) / 1000;
   if (countdown > 0) {
     return res.send({
       Countdown: countdown,
