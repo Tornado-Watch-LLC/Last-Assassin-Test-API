@@ -52,8 +52,8 @@ host_response_rules = requests.post(url + "host", host_request_rules).json()
 print(host_response_rules)
 
 assert host_response_rules['Mode'] == 'Honor'
-assert host_response_rules['Delay'] == '30'
-assert host_response_rules['AttemptCD'] == '0'
-assert host_response_rules['TagCD'] == '0'
-assert host_response_rules['TagDistance'] == '5'
-assert host_response_rules['LagDistance'] == '1'
+assert host_response_rules['Delay'] == 30
+assert host_response_rules['AttemptCD'] == 0
+assert host_response_rules['TagCD'] == 0
+assert host_response_rules['TagDistance'] == 5
+assert host_response_rules['LagDistance'] == 1
