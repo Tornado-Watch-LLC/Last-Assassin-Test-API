@@ -1,5 +1,5 @@
-const api_url = "https://api.lastassassin.app/";
-//const api_url = "http://localhost:3001/";
+//const api_url = "https://api.lastassassin.app/";
+const api_url = "http://localhost:3001/";
 
 function Create() {
   const host = document.getElementById("host").value;
@@ -52,7 +52,6 @@ function Start() {
     HomeLat: lat,
     HomeLong: long,
   };
-  console.log(request);
   call(request, "start", "start_result");
 }
 
@@ -95,7 +94,7 @@ function Verify() {
 }
 
 function call(request, route, result) {
-  console.log(request);
+  console.log("Request:", request);
   fetch(api_url + route, {
     method: "POST",
     headers: {
@@ -106,7 +105,11 @@ function call(request, route, result) {
   })
     .then((response) => {
       console.log("Response: ", response);
-      return response.json();
+      if (response.status == 200) {
+        return response.json();
+      } else if (response.status == 204) {
+        return JSON.parse('{"Empty":"Response"}');
+      }
     })
     .then((data) => {
       document.getElementById(result).innerHTML = JSON.stringify(data);

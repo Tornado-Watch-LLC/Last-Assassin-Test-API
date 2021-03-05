@@ -235,7 +235,7 @@ app.post("/start", async (req, res) => {
   game.HomeLong = req.body.HomeLong;
 
   startGame(game);
-  return res.setStatus(204).send({});
+  return res.status(204).send({});
 });
 
 function startGame(game) {
@@ -380,7 +380,7 @@ app.post("/tag", async (req, res) => {
     if (ProximityCheck(game, player)) {
       processTag(game, player);
     }
-    return res.setStatus(204).send({});
+    return res.status(204).send({});
   }
   if (game.Mode == "Honor") {
     let target = game.Players[player.Target];
@@ -390,7 +390,7 @@ app.post("/tag", async (req, res) => {
     } else {
       target.PendingAttempts.push(req.body.Player);
       player.AttemptStatus = "Pending";
-      return res.setStatus(204).send({});
+      return res.status(204).send({});
     }
   }
 });
@@ -427,7 +427,7 @@ app.post("/verify", async (req, res) => {
   if (req.body.Accept) {
     hunter.AttemptStatus = "Accepted";
     processTag(game, hunter);
-    return res.setStatus(204).send({});
+    return res.status(204).send({});
   } else {
     player.PendingAttempts = player.PendingAttempts.filter(
       (value, index, arr) => {
@@ -435,7 +435,7 @@ app.post("/verify", async (req, res) => {
       }
     );
     hunter.AttemptStatus = "Rejected";
-    return res.setStatus(204).send({});
+    return res.status(204).send({});
   }
 });
 
@@ -489,7 +489,7 @@ function processTag(game, player) {
     // Assign next target
     const newTarget = target.Target;
     player.Target = newTarget;
-    for (let [key, value] of Object.entries(players)) {
+    for (let [key, value] of Object.entries(game.Players)) {
       if (value.Target == targetName) {
         value.Target = newTarget;
       }
