@@ -363,7 +363,7 @@ app.post("/tag", async (req, res) => {
   if (!game.PlayerList.includes(req.body.Player)) {
     return sendError(res, "Player not in game.");
   }
-  let countdown = game.TagStartTime - new Date();
+  let countdown = (game.TagStartTime - new Date()) / 1000;
   if (countdown > 0) {
     return sendError(res, "Start delay not over.");
   }
