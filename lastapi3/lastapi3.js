@@ -3,7 +3,11 @@ const bodyParser = require("body-parser");
 var cors = require("cors");
 
 const app = express();
-app.use(cors());
+var corsOptions = {
+  origin: "*",
+  optionsSuccessStatus: 200,
+};
+app.use(cors(corsOptions));
 
 games = {};
 
@@ -123,7 +127,9 @@ app.post("/host", async (req, res) => {
   }
   if (req.body.Delay) {
     if (req.body.Delay >= 0 && req.body.Delay < 3600) {
+      console.log(typeof req.body.Delay);
       game.Delay = req.body.Delay;
+      console.log(typeof game.Delay);
     } else {
       return sendError(res, "Invalid setting value.");
     }
