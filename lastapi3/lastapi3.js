@@ -375,6 +375,7 @@ app.post("/tag", async (req, res) => {
   if (now - player.LastTag < game.TagCD * 1000) {
     return sendError(res, "Tag on cooldown.");
   }
+  player.LastAttempt = new Date();
   if (game.Mode == "Manual") {
     if (ProximityCheck(game, player)) {
       processTag(game, player);
@@ -462,6 +463,7 @@ function ProximityCheck(game, player) {
 }
 
 function processTag(game, player) {
+  player.LastTag = new Date();
   let players = game.Players;
   let targetName = player.Target;
   let target = players[targetName];
