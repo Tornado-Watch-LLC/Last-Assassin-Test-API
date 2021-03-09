@@ -284,8 +284,8 @@ app.post("/game", async (req, res) => {
   // Update player info
   let player = game.Players[req.body.Player];
   player.Timestamp = new Date();
-  player.Latitude = req.body.Latitude;
-  player.Longitude = req.body.Longitude;
+  player.Latitude = parseFloat(req.body.Latitude);
+  player.Longitude = parseFloat(req.body.Longitude);
 
   // Attempt tag in auto mode, return the relevant information
   let countdown = (game.TagStartTime - new Date()) / 1000;
