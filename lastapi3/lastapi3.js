@@ -18,8 +18,7 @@ Games = {
         Host: string
         Mode: string
         Delay: float
-        AttemptCD: float
-        TagCD: float
+        Cooldown: float
         TagDistance: float
         LagDistance: float
         PlayerList: [strings]
@@ -33,7 +32,6 @@ Games = {
                 Longitude: float
                 Timestamp: datetime
                 LastAttempt: datetime
-                LastTag: datetime
                 PendingAttempts: [
                   {
                     Hunter: string
@@ -75,8 +73,7 @@ app.post("/create", async (req, res) => {
       Host: game.Host,
       Mode: game.Mode,
       Delay: game.Delay,
-      AttemptCD: game.AttemptCD,
-      TagCD: game.TagCD,
+      Cooldown: game.Cooldown,
       TagDistance: game.TagDistance,
       LagDistance: game.LagDistance,
     });
@@ -92,8 +89,7 @@ function createGame(host, code) {
   game.PlayerList.push(host);
   game.Mode = "Manual";
   game.Delay = 60;
-  game.AttemptCD = 5;
-  game.TagCD = 20;
+  game.Cooldown = 5;
   game.TagDistance = 1;
   game.LagDistance = 3;
   return game;
@@ -133,18 +129,10 @@ app.post("/host", async (req, res) => {
       return sendError(res, "Invalid setting value.");
     }
   }
-  if (req.body.AttemptCD) {
-    const attempt_cd = parseFloat(req.body.AttemptCD);
-    if (attempt_cd >= 0 && attempt_cd < 3600) {
-      game.AttemptCD = attempt_cd;
-    } else {
-      return sendError(res, "Invalid setting value.");
-    }
-  }
-  if (req.body.TagCD) {
-    const tag_cd = parseFloat(req.body.TagCD);
-    if (tag_cd >= 0 && tag_cd < 3600) {
-      game.TagCD = tag_cd;
+  if (req.body.Cooldown) {
+    const cooldown = parseFloat(req.body.Cooldown);
+    if (cooldown >= 0 && cooldown < 3600) {
+      game.Cooldown = cooldown;
     } else {
       return sendError(res, "Invalid setting value.");
     }
@@ -199,8 +187,7 @@ function LobbyResponse(game, res) {
     GameStarted: game.GameStarted,
     Mode: game.Mode,
     Delay: game.Delay,
-    AttemptCD: game.AttemptCD,
-    TagCD: game.TagCD,
+    Cooldown: game.Cooldown,
     TagDistance: game.TagDistance,
     LagDistance: game.LagDistance,
   });
@@ -368,15 +355,12 @@ app.post("/tag", async (req, res) => {
     return sendError(res, "Start delay not over.");
   }
   let player = game.Players[req.body.Player];
-  let now = new Date();
-  if (now - player.LastAttempt < game.AttemptCD * 1000) {
-    return sendError(res, "Attempt on cooldown.");
-  }
-  if (now - player.LastTag < game.TagCD * 1000) {
-    return sendError(res, "Tag on cooldown.");
-  }
-  player.LastAttempt = new Date();
   if (game.Mode == "Manual") {
+    let now = new Date();
+    if (now - player.LastAttempt < game.Cooldown * 1000) {
+      return sendError(res, "Attempt on cooldown.");
+    }
+    player.LastAttempt = new Date();
     if (ProximityCheck(game, player)) {
       processTag(game, player);
     }

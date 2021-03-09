@@ -32,8 +32,7 @@ def checkErrors(route, bad_requests, errors):
 host = 'Host'
 mode = 'Honor'
 delay = 2
-a_cd = 2
-t_cd = 4
+cd = 2
 t_dist = 5
 l_dist = 1
 players = [host, 'Steven', 'Stefan', 'Ben', 'Trent']
@@ -57,8 +56,7 @@ assert response['Players'] == players[:1]
 assert response['Host'] == host
 assert response['Mode'] == 'Manual'
 assert response['Delay'] == 60
-assert response['AttemptCD'] == 5
-assert response['TagCD'] == 20
+assert response['Cooldown'] == 5
 assert response['TagDistance'] == 1
 assert response['LagDistance'] == 3
 print('Valid Create Call')
@@ -99,8 +97,7 @@ assert response['Players'] == players[:1]
 assert response['Host'] == host
 assert response['Mode'] == 'Manual'
 assert response['Delay'] == 60
-assert response['AttemptCD'] == 5
-assert response['TagCD'] == 20
+assert response['Cooldown'] == 5
 assert response['TagDistance'] == 1
 assert response['LagDistance'] == 3
 print('Valid Host Call')
@@ -111,16 +108,14 @@ status, response = fetch('host', {
     'Player': host,
     'Mode': mode,
     'Delay': delay,
-    'AttemptCD': a_cd,
-    'TagCD': t_cd,
+    'Cooldown': cd,
     'TagDistance': t_dist,
     'LagDistance': l_dist
 })
 assert status == 200
 assert response['Mode'] == mode
 assert response['Delay'] == delay
-assert response['AttemptCD'] == a_cd
-assert response['TagCD'] == t_cd
+assert response['Cooldown'] == cd
 assert response['TagDistance'] == t_dist
 assert response['LagDistance'] == l_dist
 print('Valid Host Call (Rules Change)')
@@ -162,8 +157,7 @@ for i in range(1, len(players)):
     assert response['Host'] == host
     assert response['Mode'] == mode
     assert response['Delay'] == delay
-    assert response['AttemptCD'] == a_cd
-    assert response['TagCD'] == t_cd
+    assert response['Cooldown'] == cd
     assert response['TagDistance'] == t_dist
     assert response['LagDistance'] == l_dist
     print('Valid Lobby Call')
@@ -394,11 +388,11 @@ status, response = fetch('game', {
 assert response['Status'] == 'Pending'
 
 # Attempt Cooldown
-checkError('tag', {
-    'Game': code,
-    'Player': host
-}, 'Attempt on cooldown.')
-time.sleep(2.5)
+# checkError('tag', {
+#     'Game': code,
+#     'Player': host
+# }, 'Attempt on cooldown.')
+# time.sleep(2.5)
 
 # Attempt Still Pending Error
 checkError('tag', {
@@ -456,12 +450,5 @@ status, response = fetch('game', {
 assert status == 200
 assert response['Living'] == False
 assert response['Pending'] == []
-
-# Tag CD
-time.sleep(2.5)
-checkError('tag', {
-    'Game': code,
-    'Player': host
-}, 'Tag on cooldown.')
 
 print('\nAll tests passed.')
