@@ -4,8 +4,11 @@ var cors = require("cors");
 var AWS = require("aws-sdk");
 
 AWS.config.update({
-  region,
+  region: "us-west-2",
+  endpoint: "http://localhost:8000",
 });
+
+var docClient = new AWS.DynamoDB.DocumentClient();
 
 const app = express();
 var corsOptions = {
@@ -15,7 +18,28 @@ var corsOptions = {
 app.use(cors(corsOptions));
 app.options("*", cors());
 
-games = {};
+let host = "Host";
+
+let params = {
+  TableName: "Games",
+  Item: {
+    code: "ABCD",
+    host: host,
+    mode: "Manual",
+    delay: 30,
+  },
+};
+
+docClient.put(params, function (err, data) {
+  if (err) {
+    console.error(
+      "Unable to add game. Error JSON:",
+      JSON.stringify(err, null, 2)
+    );
+  } else {
+    console.log("PutItem succeeded:", data);
+  }
+});
 
 /*
 Game Schema

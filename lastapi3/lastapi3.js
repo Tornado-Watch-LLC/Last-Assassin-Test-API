@@ -223,7 +223,7 @@ app.post("/start", async (req, res) => {
   game.HomeLong = parseFloat(req.body.HomeLong);
 
   startGame(game);
-  return res.status(204).send({});
+  return res.send({ Success: true });
 });
 
 function startGame(game) {
@@ -364,7 +364,7 @@ app.post("/tag", async (req, res) => {
     if (ProximityCheck(game, player)) {
       processTag(game, player);
     }
-    return res.status(204).send({});
+    return res.send({ Success: true });
   }
   if (game.Mode == "Honor") {
     let target = game.Players[player.Target];
@@ -374,7 +374,7 @@ app.post("/tag", async (req, res) => {
     } else {
       target.PendingAttempts.push(req.body.Player);
       player.AttemptStatus = "Pending";
-      return res.status(204).send({});
+      return res.send({ Success: true });
     }
   }
 });
@@ -411,7 +411,7 @@ app.post("/verify", async (req, res) => {
   if (req.body.Accept.toLowerCase() == "true") {
     hunter.AttemptStatus = "Accepted";
     processTag(game, hunter);
-    return res.status(204).send({});
+    return res.send({ Success: true });
   } else {
     player.PendingAttempts = player.PendingAttempts.filter(
       (value, index, arr) => {
@@ -419,7 +419,7 @@ app.post("/verify", async (req, res) => {
       }
     );
     hunter.AttemptStatus = "Rejected";
-    return res.status(204).send({});
+    return res.send({ Success: true });
   }
 });
 
