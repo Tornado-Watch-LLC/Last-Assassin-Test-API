@@ -23,8 +23,7 @@ Game Schema
     Host: string
     Mode: string
     Delay: float
-    AttemptCD: float
-    TagCD: float
+    Cooldown: float
     TagDistance: float
     LagDistance: float
     Players: [string]
@@ -39,7 +38,7 @@ Game Schema
     }
   }
 Player Schema
-  PlayerName: {
+  GameCode/PlayerName: {
     Living: boolean
     Tags: int
     TargetName: string

@@ -219,8 +219,8 @@ app.post("/start", async (req, res) => {
     return sendError(res, "Cannot start game with fewer than 3 players.");
   }
 
-  game.HomeLat = req.body.HomeLat;
-  game.HomeLong = req.body.HomeLong;
+  game.HomeLat = parseFloat(req.body.HomeLat);
+  game.HomeLong = parseFloat(req.body.HomeLong);
 
   startGame(game);
   return res.status(204).send({});
