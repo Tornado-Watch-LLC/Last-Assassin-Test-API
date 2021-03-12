@@ -254,7 +254,7 @@ function startGame(game) {
   game.PlayersAlive = player_count;
 
   // Randomly shuffle the array of players
-  shuffle(players);
+  shuffle(tokens);
 
   // Generate the players and give them targets
   for (let i = 0; i < player_count; i++) {
