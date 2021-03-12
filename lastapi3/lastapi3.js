@@ -27,10 +27,10 @@ Games = {
     }
     GameStarted: boolean
     PlayersAlive: int
-    HomeLat: float
-    HomeLong: float
     GameOver: boolean
     LastStanding: string
+    LastLat: float
+    LastLong: float
     FinalScores: {
       PlayerName: Tags, ...
     }
@@ -217,9 +217,6 @@ app.post("/start", async (req, res) => {
   if (!req.body.Token) {
     return sendError(res, "Token is required.");
   }
-  if (!req.body.HomeLat || !req.body.HomeLong) {
-    return sendError(res, "Home coordinates are required.");
-  }
   const token = req.body.Token;
   const code = decode(token);
   if (!(code in games)) {
@@ -235,9 +232,6 @@ app.post("/start", async (req, res) => {
   if (Object.values(game.PlayerList).length < 3) {
     return sendError(res, "Cannot start game with fewer than 3 players.");
   }
-
-  game.HomeLat = parseFloat(req.body.HomeLat);
-  game.HomeLong = parseFloat(req.body.HomeLong);
 
   startGame(game);
   return res.send({ Success: true });
@@ -341,10 +335,8 @@ app.post("/game", async (req, res) => {
 function gameOver(game, res) {
   return res.send({
     LastStanding: game.LastStanding,
-    LastStandingLat: players[game.LastStanding].Latitude,
-    LastStandingLong: players[game.LastStanding].Longitude,
-    HomeLat: game.HomeLat,
-    HomeLong: game.HomeLong,
+    LastLat: game.LastLat,
+    LastLong: game.LastLong,
     FinalScores: game.FinalScores,
   });
 }
@@ -478,6 +470,8 @@ function processTag(game, player) {
     for (let [key, value] of Object.entries(players)) {
       if (value.Living) {
         game.LastStanding = key;
+        game.LastLat = value.Latitude;
+        game.LastLong = value.Longitude;
       }
       results[key] = value.Tags;
     }
