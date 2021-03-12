@@ -111,7 +111,7 @@ app.post("/join", async (req, res) => {
   }
   let name = req.body.Player;
   const token = code + makeid(50);
-  if (Object.values(game.PlayerList).includes(name)) {
+  while (Object.values(game.PlayerList).includes(name)) {
     name += "2";
   }
   game.PlayerList[token] = name;
