@@ -445,7 +445,6 @@ status, response = fetch('game', {
     'Longitude': 0
 })
 assert status == 200
-print(response)
 assert response['Tags'] == 2
 assert response['TargetName'] == targets[host]
 assert response['PlayersAlive'] == 4
@@ -455,9 +454,6 @@ status, response = fetch('game', {
     'Latitude': 0,
     'Longitude': 0
 })
-print(response)
-print(host_target)
-print(targets)
 assert status == 200
 assert response['Tags'] == 0
 assert response['TargetName'] == targets[host]

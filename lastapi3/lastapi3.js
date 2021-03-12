@@ -486,11 +486,9 @@ function processTag(game, player) {
     // Assign next target
     const newTarget = target.Target;
     player.Target = newTarget;
-    console.log("Setting", player.Name, "target to", players[newTarget].Name);
     for (let [t, p] of Object.entries(players)) {
       if (players[p.Target].Name == target.Name) {
-        players[p.Target].Target = newTarget;
-        console.log("Setting", p.Name, "target to", players[newTarget].Name);
+        p.Target = newTarget;
       }
     }
   }
