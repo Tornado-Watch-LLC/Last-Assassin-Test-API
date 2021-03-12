@@ -1,6 +1,7 @@
 import requests
 import time
-#url = 'https://api.lastassassin.app/'
+import json
+# url = 'https://api.lastassassin.app/'
 url = 'http://localhost:3001/'
 
 total_errors = 39
@@ -19,7 +20,8 @@ def checkError(route, request, message):
     status, result = fetch(route, request)
     print('-', result['Error'])
     assert status == 200
-    assert result['Error'] == message
+    assert result['Error'] == message, json.dumps(
+        request) + '\n' + json.dumps(result)
     global total_errors
     total_errors -= 1
 
@@ -35,7 +37,8 @@ delay = 2
 cd = 2
 t_dist = 5
 l_dist = 1
-players = [host, 'Steven', 'Stefan', 'Ben', 'Trent']
+players = [host, 'Steven', 'Stefan', 'Ben', 'Trent', 'Steven']
+tokens = []
 homelat = 0
 homelong = 0
 
@@ -51,15 +54,50 @@ status, response = fetch('create', {
     'Host': host
 })
 assert status == 200
-code = response['Game']
-assert response['Players'] == players[:1]
-assert response['Host'] == host
-assert response['Mode'] == 'Manual'
-assert response['Delay'] == 60
-assert response['Cooldown'] == 5
-assert response['TagDistance'] == 1
-assert response['LagDistance'] == 3
+tokens.append(response['Token'])
+code = tokens[0][:5]
 print('Valid Create Call')
+
+# Early Start Call
+print('Early Start Call:')
+checkError('start', {
+    'Token': tokens[0],
+    'HomeLat': homelat,
+    'HomeLong': homelong
+}, 'Cannot start game with fewer than 3 players.')
+
+
+## Join Game ##
+
+# Errors
+print('Join Errors:')
+bad_requests = [
+    {}, {
+        'Game': code
+    }, {
+        'Game': 'this game does not exist', 'Player': 'new player'
+    }]
+errors = [
+    'Game code is required.',
+    'Player is required.',
+    'Game does not exist.']
+checkErrors('join', bad_requests, errors)
+
+# Valid Join Calls
+for i in range(1, len(players)):
+    status, response = fetch('join', {
+        'Game': code,
+        'Player': players[i]
+    })
+    assert status == 200
+    print(response)
+    tokens.append(response['Token'])
+    if i < len(players) - 1:
+        assert response['Player'] == players[i]
+    else:
+        assert response['Player'] == players[i] + '2'
+        players[i] += '2'
+    print('Valid Join Call')
 
 
 ## Host Lobby Heartbeat ##
@@ -68,20 +106,15 @@ print('Valid Create Call')
 print('Host Errors:')
 bad_requests = [
     {}, {
-        'Game': code
+        'Token': 'this game does not exist'
     }, {
-        'Game': 'this game does not exist', 'Player': host
+        'Token': tokens[1]
     }, {
-        'Game': code,
-        'Player': 'Not the Host'
-    }, {
-        'Game': code,
-        'Player': host,
+        'Token': tokens[0],
         'Delay': -1
     }]
 errors = [
-    'Game code is required.',
-    'Player is required.',
+    'Token is required.',
     'Game does not exist.',
     'You are not the host.',
     'Invalid setting value.']
@@ -89,11 +122,11 @@ checkErrors('host', bad_requests, errors)
 
 # Valid Host Call
 status, response = fetch('host', {
-    'Game': code,
-    'Player': host
+    'Token': tokens[0]
 })
 assert status == 200
-assert response['Players'] == players[:1]
+print(response)
+assert response['Players'] == players
 assert response['Host'] == host
 assert response['Mode'] == 'Manual'
 assert response['Delay'] == 60
@@ -104,8 +137,7 @@ print('Valid Host Call')
 
 # Valid Host Call (Rules Change)
 status, response = fetch('host', {
-    'Game': code,
-    'Player': host,
+    'Token': tokens[0],
     'Mode': mode,
     'Delay': delay,
     'Cooldown': cd,
@@ -127,33 +159,22 @@ print('Valid Host Call (Rules Change)')
 print('Lobby Errors:')
 bad_requests = [
     {}, {
-        'Game': code
+        'Token': 'this game does not exist',
     }, {
-        'Game': 'this game does not exist',
-        'Player': host
+        'Token': code + 'not a valid token suffix'
     }]
-errors = ['Game code is required.',
-          'Player is required.',
-          'Game does not exist.']
+errors = ['Token is required.',
+          'Game does not exist.',
+          'Invalid token.']
 checkErrors('lobby', bad_requests, errors)
-
-# Early Start Call
-print('Early Start Call:')
-checkError('start', {
-    'Game': code,
-    'Player': host,
-    'HomeLat': homelat,
-    'HomeLong': homelong
-}, 'Cannot start game with fewer than 3 players.')
 
 # Valid Lobby Calls
 for i in range(1, len(players)):
     status, response = fetch('lobby', {
-        'Game': code,
-        'Player': players[i]
+        'Token': tokens[i]
     })
     assert status == 200
-    assert response['Players'] == players[:i+1]
+    assert response['Players'] == players
     assert response['Host'] == host
     assert response['Mode'] == mode
     assert response['Delay'] == delay
@@ -169,34 +190,27 @@ for i in range(1, len(players)):
 print('Start Errors:')
 bad_requests = [
     {}, {
-        'Game': code
-    }, {
-        'Game': code,
-        'Player': host
-    }, {
-        'Game': 'this game does not exist',
-        'Player': host,
+        'Token': 'this game does not exist',
         'HomeLat': homelat,
         'HomeLong': homelong
     }, {
-        'Game': code,
-        'Player': 'Not the Host',
+        'Token': tokens[1],
         'HomeLat': homelat,
         'HomeLong': homelong
+    }, {
+        'Token': tokens[0]
     }]
 errors = [
-    'Game code is required.',
-    'Player is required.',
-    'Home coordinates are required.',
+    'Token is required.',
     'Game does not exist.',
-    'You are not the host.']
+    'You are not the host.',
+    'Home coordinates are required.']
 checkErrors('start', bad_requests, errors)
 
 # Early Game Call
 print('Early Game Call:')
 checkError('game', {
-    'Game': code,
-    'Player': host,
+    'Token': tokens[0],
     'Latitude': 0,
     'Longitude': 0
 }, 'Game not yet started.')
@@ -204,33 +218,30 @@ checkError('game', {
 # Early Tag Call
 print('Early Tag Call:')
 checkError('tag', {
-    'Game': code,
-    'Player': host,
+    'Token': tokens[0]
 }, 'Game not yet started.')
 
 # Valid Start Call
 status, response = fetch('start', {
-    'Game': code,
-    'Player': host,
+    'Token': tokens[0],
     'HomeLat': homelat,
     'HomeLong': homelong
 })
-assert status == 204
-assert response == None
+assert status == 200
+assert response['Success'] == True
 print('Valid Start Call')
 
 # Late Start Call
 print('Late Start Call:')
 checkError('start', {
-    'Game': code,
-    'Player': host,
+    'Token': tokens[0],
     'HomeLat': homelat,
     'HomeLong': homelong
 }, 'Game already started.')
 
-# Late Lobby Call (Join Attempt)
-print('Late Lobby Call (Join Attempt)')
-checkError('lobby', {
+# Late Join Call
+print('Late Join Call')
+checkError('join', {
     'Game': code,
     'Player': 'New Player'
 }, 'Cannot join in-progress game.')
@@ -241,34 +252,27 @@ checkError('lobby', {
 print('Game Errors:')
 bad_requests = [
     {}, {
-        'Game': code
+        'Token': tokens[0]
     }, {
-        'Game': code,
-        'Player': host
-    }, {
-        'Game': 'this game does not exist',
-        'Player': host,
+        'Token': 'this game does not exist',
         'Latitude': homelat,
         'Longitude': homelong
     }, {
-        'Game': code,
-        'Player': 'Not a Player',
+        'Token': code + 'invalid token suffix',
         'Latitude': homelat,
         'Longitude': homelong
     }]
 errors = [
-    'Game code is required.',
-    'Player is required.',
+    'Token is required.',
     'Coordinates are required.',
     'Game does not exist.',
-    'Player not in game.']
+    'Invalid token.']
 checkErrors('game', bad_requests, errors)
 
 # Valid Game Calls (During Countdown)
 for i in range(len(players)):
     status, response = fetch('game', {
-        'Game': code,
-        'Player': players[i],
+        'Token': tokens[i],
         'Latitude': i,
         'Longitude': i
     })
@@ -280,8 +284,7 @@ for i in range(len(players)):
 # Early Tag Call
 print('Early Tag Call:')
 checkError('tag', {
-    'Game': code,
-    'Player': host
+    'Token': tokens[0]
 }, 'Start delay not over.')
 
 # Valid Game Calls (After Countdown)
@@ -289,8 +292,7 @@ time.sleep(2.5)
 targets = {}
 for i in range(len(players)):
     status, response = fetch('game', {
-        'Game': code,
-        'Player': players[i],
+        'Token': tokens[i],
         'Latitude': i,
         'Longitude': i
     })
@@ -298,9 +300,9 @@ for i in range(len(players)):
     assert response['Living'] == True
     assert response['Tags'] == 0
     targets[players[i]] = response['TargetName']
-    assert response['PlayersAlive'] == 5
+    assert response['PlayersAlive'] == 6
     assert response['Pending'] == []
-    assert response['Status'] == 'None'
+    assert response['Attempted'] == False
     print('Valid Game Call')
 for player in players:
     assert targets[player] != player  # Player doesn't target themselves
@@ -314,141 +316,152 @@ for player in players:
 print('Tag Errors:')
 bad_requests = [
     {}, {
-        'Game': code
+        'Token': 'this game does not exist',
     }, {
-        'Game': 'this game does not exist',
-        'Player': host,
-        'Latitude': homelat,
-        'Longitude': homelong
-    }, {
-        'Game': code,
-        'Player': 'this player is not in the game',
-        'Latitude': homelat,
-        'Longitude': homelong
+        'Token': code + 'invalid token suffix',
     }]
 errors = [
-    'Game code is required.',
-    'Player is required.',
+    'Token is required.',
     'Game does not exist.',
-    'Player not in game.']
+    'Invalid token.']
 checkErrors('tag', bad_requests, errors)
 
 # Verify Errors
 print('Verify Errors:')
 bad_requests = [
     {}, {
-        'Game': code
+        'Token': tokens[0]
     }, {
-        'Game': code,
-        'Player': targets[host]
-    }, {
-        'Game': code,
-        'Player': targets[host],
+        'Token': tokens[0],
         'Hunter': host,
     }, {
-        'Game': 'this game does not exist',
-        'Player': targets[host],
+        'Token': 'this game does not exist',
         'Hunter': host,
         'Accept': True
     }, {
-        'Game': code,
-        'Player': 'this player is not in the game',
+        'Token': code + 'invalid token suffix',
         'Hunter': host,
         'Accept': True
     }, {
-        'Game': code,
-        'Player': targets[host],
+        'Token': tokens[0],
         'Hunter': host,
         'Accept': True
     }]
 errors = [
-    'Game code is required.',
-    'Player is required.',
+    'Token is required.',
     'Hunter is required.',
     'Response is required.',
     'Game does not exist.',
-    'Player not in game.',
+    'Invalid token.',
     'No matching tag attempt found.']
 checkErrors('verify', bad_requests, errors)
 
 # Valid Tag Call
 print('Valid Tag Call')
 status, response = fetch('tag', {
-    'Game': code,
-    'Player': host
+    'Token': tokens[0]
 })
-assert status == 204
-assert response == None
+assert status == 200
+assert response['Success'] == True
 status, response = fetch('game', {
-    'Game': code,
-    'Player': host,
+    'Token': tokens[0],
     'Latitude': 0,
     'Longitude': 0
 })
-assert response['Status'] == 'Pending'
-
-# Attempt Cooldown
-# checkError('tag', {
-#     'Game': code,
-#     'Player': host
-# }, 'Attempt on cooldown.')
-# time.sleep(2.5)
+assert response['Attempted'] == True
 
 # Attempt Still Pending Error
 checkError('tag', {
-    'Game': code,
-    'Player': host
+    'Token': tokens[0]
 }, 'Previous attempt still pending.')
 time.sleep(2.5)
 
 # Valid Verify Call (Reject)
 print('Valid Verify Call (Reject)')
+host_target = targets[host]
+host_target_index = players.index(host_target)
+host_target_token = tokens[host_target_index]
 status, response = fetch('verify', {
-    'Game': code,
-    'Player': targets[host],
+    'Token': host_target_token,
     'Hunter': host,
     'Accept': False
 })
-assert status == 204
-assert response == None
+assert status == 200
+assert response['Success'] == True
 
 # Valid Tag/Verify Calls (Accept)
 print('Valid Tag/Verify Calls (Accept)')
 status, response = fetch('tag', {
-    'Game': code,
-    'Player': host
+    'Token': tokens[0]
 })
-assert status == 204
-assert response == None
+assert status == 200
+assert response['Success'] == True
 status, response = fetch('verify', {
-    'Game': code,
-    'Player': targets[host],
+    'Token': host_target_token,
     'Hunter': host,
     'Accept': True
 })
-assert status == 204
-assert response == None
+targets[host] = targets[host_target]
+assert status == 200
+assert response['Success'] == True
 status, response = fetch('game', {
-    'Game': code,
-    'Player': host,
+    'Token': tokens[0],
     'Latitude': 0,
     'Longitude': 0
 })
 assert status == 200
 assert response['Tags'] == 1
-previous_target = targets[host]
-targets[host] = targets[previous_target]
-assert response['TargetName'] == targets[previous_target]
-assert response['PlayersAlive'] == 4
-assert response['Status'] == 'Accepted'
+assert response['TargetName'] == targets[host_target]
+assert response['PlayersAlive'] == 5
+assert response['Attempted'] == False
 status, response = fetch('game', {
-    'Game': code,
-    'Player': previous_target,
+    'Token': host_target_token,
     'Latitude': 0,
     'Longitude': 0
 })
 assert status == 200
 assert response['Living'] == False
 assert response['Pending'] == []
+
+# Confirm that a second tag correctly updates targets for everyone
+status, response = fetch('tag', {
+    'Token': tokens[0]
+})
+assert status == 200
+assert response['Success'] == True
+new_host_target = targets[host]
+new_host_target_index = players.index(new_host_target)
+new_host_target_token = tokens[new_host_target_index]
+status, response = fetch('verify', {
+    'Token': new_host_target_token,
+    'Hunter': host,
+    'Accept': True
+})
+targets[host] = targets[new_host_target]
+targets[host_target] = targets[new_host_target]
+status, response = fetch('game', {
+    'Token': tokens[0],
+    'Latitude': 0,
+    'Longitude': 0
+})
+assert status == 200
+print(response)
+assert response['Tags'] == 2
+assert response['TargetName'] == targets[host]
+assert response['PlayersAlive'] == 4
+assert response['Attempted'] == False
+status, response = fetch('game', {
+    'Token': host_target_token,
+    'Latitude': 0,
+    'Longitude': 0
+})
+print(response)
+print(host_target)
+print(targets)
+assert status == 200
+assert response['Tags'] == 0
+assert response['TargetName'] == targets[host]
+assert response['PlayersAlive'] == 4
+assert response['Attempted'] == False
 
 print('\nAll tests passed.')

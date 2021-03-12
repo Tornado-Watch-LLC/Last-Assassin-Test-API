@@ -20,25 +20,30 @@ app.options("*", cors());
 
 let host = "Host";
 
-let params = {
-  TableName: "Games",
-  Item: {
-    code: "ABCD",
-    host: host,
-    mode: "Manual",
-    delay: 30,
-  },
-};
-
-docClient.put(params, function (err, data) {
-  if (err) {
-    console.error(
-      "Unable to add game. Error JSON:",
-      JSON.stringify(err, null, 2)
-    );
-  } else {
-    console.log("PutItem succeeded:", data);
-  }
+async function addGame(data) {
+  let params = {
+    TableName: "Games",
+    Item: data,
+    ConditionExpression: "attribute_not_exists(code)",
+  };
+  await docClient.put(params, function (err, data) {
+    if (err) {
+      console.error(
+        "Unable to add game. Error JSON:",
+        JSON.stringify(err, null, 2)
+      );
+      return false;
+    } else {
+      console.log("PutItem succeeded:", data);
+      return true;
+    }
+  });
+}
+addGame({
+  code: "ABCDE",
+  host: host,
+  mode: "Manual",
+  delay: 30,
 });
 
 /*

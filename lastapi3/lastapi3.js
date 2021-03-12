@@ -11,45 +11,46 @@ app.use(cors(corsOptions));
 app.options("*", cors());
 
 games = {};
+players = {};
 
 /*
 Games = {
-    GameCode: {
-        Host: string
-        Mode: string
-        Delay: float
-        Cooldown: float
-        TagDistance: float
-        LagDistance: float
-        PlayerList: [strings]
-        GameStarted: boolean
-        Players: {
-            PlayerName: {
-                Living: boolean
-                Tags: int
-                TargetName: string
-                Latitude: float
-                Longitude: float
-                Timestamp: datetime
-                LastAttempt: datetime
-                PendingAttempts: [
-                  {
-                    Hunter: string
-                    Timestamp: datetime
-                  }
-                ]
-                AttemptStatus: string
-            }, ...
-        }
-        PlayersAlive: int
-        HomeLat: float
-        HomeLong: float
-        GameOver: boolean
-        LastStanding: string
-        FinalScores: {
-          PlayerName: Tags, ...
-        }
-    }, ...
+  Code: {
+    Host: string
+    Mode: string
+    Delay: float
+    Cooldown: float
+    TagDistance: float
+    LagDistance: float
+    PlayerList: {
+      Token: Name
+    }
+    GameStarted: boolean
+    PlayersAlive: int
+    HomeLat: float
+    HomeLong: float
+    GameOver: boolean
+    LastStanding: string
+    FinalScores: {
+      PlayerName: Tags, ...
+    }
+  }, ...
+}
+Players = {
+  Token: {
+    Name: string
+    Living: boolean
+    Tags: int
+    Target: string
+    Latitude: float
+    Longitude: float
+    Timestamp: datetime
+    LastAttempt: datetime
+    PendingAttempts: {
+      Name: Token
+    }
+    Attempted: boolean
+  }, ...
 }
 */
 
@@ -66,36 +67,33 @@ app.post("/create", async (req, res) => {
   } else {
     const host = req.body.Host;
     const code = makeid(5);
-    let game = createGame(host, code);
+    const token = code + makeid(50);
+    createGame(host, token, code);
     return res.send({
-      Game: code,
-      Players: game.PlayerList,
-      Host: game.Host,
-      Mode: game.Mode,
-      Delay: game.Delay,
-      Cooldown: game.Cooldown,
-      TagDistance: game.TagDistance,
-      LagDistance: game.LagDistance,
+      Token: token,
     });
   }
 });
 
-function createGame(host, code) {
+function createGame(host, token, code) {
   games[code] = {};
   let game = games[code];
   game.GameStarted = false;
-  game.Host = host;
-  game.PlayerList = [];
-  game.PlayerList.push(host);
+  game.Host = token;
+  game.PlayerList = {};
+  game.PlayerList[token] = host;
   game.Mode = "Manual";
   game.Delay = 60;
   game.Cooldown = 5;
   game.TagDistance = 1;
   game.LagDistance = 3;
-  return game;
 }
 
-app.post("/host", async (req, res) => {
+function decode(token) {
+  return token.toUpperCase().substring(0, 5);
+}
+
+app.post("/join", async (req, res) => {
   // Request Validation
   if (!req.body.Game) {
     return sendError(res, "Game code is required.");
@@ -103,12 +101,38 @@ app.post("/host", async (req, res) => {
   if (!req.body.Player) {
     return sendError(res, "Player is required.");
   }
-  if (!(req.body.Game in games)) {
+  const code = decode(req.body.Game);
+  if (!(code in games)) {
     return sendError(res, "Game does not exist.");
   }
-  let game = games[req.body.Game];
-  let player = req.body.Player;
-  if (player != game.Host) {
+  let game = games[code];
+  if (game.GameStarted) {
+    return sendError(res, "Cannot join in-progress game.");
+  }
+  let name = req.body.Player;
+  const token = code + makeid(50);
+  if (Object.values(game.PlayerList).includes(name)) {
+    name += "2";
+  }
+  game.PlayerList[token] = name;
+  return res.send({
+    Token: token,
+    Player: name,
+  });
+});
+
+app.post("/host", async (req, res) => {
+  // Request Validation
+  if (!req.body.Token) {
+    return sendError(res, "Token is required.");
+  }
+  const token = req.body.Token;
+  const code = decode(token);
+  if (!(code in games)) {
+    return sendError(res, "Game does not exist.");
+  }
+  let game = games[code];
+  if (token != game.Host) {
     return sendError(res, "You are not the host.");
   }
 
@@ -159,22 +183,17 @@ app.post("/host", async (req, res) => {
 
 app.post("/lobby", async (req, res) => {
   // Request Validation
-  if (!req.body.Game) {
-    return sendError(res, "Game code is required.");
+  if (!req.body.Token) {
+    return sendError(res, "Token is required.");
   }
-  if (!req.body.Player) {
-    return sendError(res, "Player is required.");
-  }
-  if (!(req.body.Game in games)) {
+  const token = req.body.Token;
+  const code = decode(token);
+  if (!(code in games)) {
     return sendError(res, "Game does not exist.");
   }
-  let game = games[req.body.Game];
-  if (!game.PlayerList.includes(req.body.Player)) {
-    if (game.GameStarted) {
-      return sendError(res, "Cannot join in-progress game.");
-    } else {
-      game.PlayerList.push(req.body.Player);
-    }
+  let game = games[code];
+  if (!(token in game.PlayerList)) {
+    return sendError(res, "Invalid token.");
   }
 
   return LobbyResponse(game, res);
@@ -182,8 +201,8 @@ app.post("/lobby", async (req, res) => {
 
 function LobbyResponse(game, res) {
   return res.send({
-    Players: game.PlayerList,
-    Host: game.Host,
+    Players: Object.values(game.PlayerList),
+    Host: game.PlayerList[game.Host],
     GameStarted: game.GameStarted,
     Mode: game.Mode,
     Delay: game.Delay,
@@ -195,27 +214,25 @@ function LobbyResponse(game, res) {
 
 app.post("/start", async (req, res) => {
   // Request Validation
-  if (!req.body.Game) {
-    return sendError(res, "Game code is required.");
-  }
-  if (!req.body.Player) {
-    return sendError(res, "Player is required.");
+  if (!req.body.Token) {
+    return sendError(res, "Token is required.");
   }
   if (!req.body.HomeLat || !req.body.HomeLong) {
     return sendError(res, "Home coordinates are required.");
   }
-  if (!(req.body.Game in games)) {
+  const token = req.body.Token;
+  const code = decode(token);
+  if (!(code in games)) {
     return sendError(res, "Game does not exist.");
   }
-  let game = games[req.body.Game];
-  let player = req.body.Player;
-  if (player != game.Host) {
+  let game = games[code];
+  if (token != game.Host) {
     return sendError(res, "You are not the host.");
   }
   if (game.GameStarted) {
     return sendError(res, "Game already started.");
   }
-  if (game.PlayerList.length < 3) {
+  if (Object.values(game.PlayerList).length < 3) {
     return sendError(res, "Cannot start game with fewer than 3 players.");
   }
 
@@ -232,21 +249,22 @@ function startGame(game) {
   let now = new Date();
   game.TagStartTime = new Date(now.getTime() + game.Delay * 1000);
   game.GameOver = false;
-  game.Players = {};
-  const player_count = game.PlayerList.length;
+  let tokens = Object.keys(game.PlayerList);
+  const player_count = tokens.length;
   game.PlayersAlive = player_count;
 
   // Randomly shuffle the array of players
-  shuffle(game.PlayerList);
+  shuffle(players);
 
   // Generate the players and give them targets
   for (let i = 0; i < player_count; i++) {
-    const player_name = game.PlayerList[i];
-    game.Players[player_name] = {};
-    let player = game.Players[player_name];
+    const token = tokens[i];
+    players[token] = {};
+    let player = players[token];
+    player.Name = game.PlayerList[token];
     player.Living = true;
     player.Tags = 0;
-    player.Target = game.PlayerList[(i + 1) % player_count];
+    player.Target = tokens[(i + 1) % player_count];
     player.Latitude = 0;
     player.Longitude = 0;
     player.Timestamp = 0;
@@ -254,35 +272,34 @@ function startGame(game) {
     // For an honor game, add the PendingAttempts list
     if (game.Mode == "Honor") {
       player.PendingAttempts = [];
-      player.AttemptStatus = "None";
+      player.Attempted = false;
     }
   }
 }
 
 app.post("/game", async (req, res) => {
   // Request Validation
-  if (!req.body.Game) {
-    return sendError(res, "Game code is required.");
-  }
-  if (!req.body.Player) {
-    return sendError(res, "Player is required.");
+  if (!req.body.Token) {
+    return sendError(res, "Token is required.");
   }
   if (!req.body.Latitude || !req.body.Longitude) {
     return sendError(res, "Coordinates are required.");
   }
-  if (!(req.body.Game in games)) {
+  const token = req.body.Token;
+  const code = decode(token);
+  if (!(code in games)) {
     return sendError(res, "Game does not exist.");
   }
-  let game = games[req.body.Game];
+  let game = games[code];
   if (!game.GameStarted) {
     return sendError(res, "Game not yet started.");
   }
-  if (!game.PlayerList.includes(req.body.Player)) {
-    return sendError(res, "Player not in game.");
+  if (!(token in players)) {
+    return sendError(res, "Invalid token.");
   }
+  let player = players[token];
 
   // Update player info
-  let player = game.Players[req.body.Player];
   player.Timestamp = new Date();
   player.Latitude = parseFloat(req.body.Latitude);
   player.Longitude = parseFloat(req.body.Longitude);
@@ -302,18 +319,18 @@ app.post("/game", async (req, res) => {
         return gameOver(game, res);
       }
     }
-    let target = game.Players[player.Target];
+    let target = players[player.Target];
     let response = {
       Living: player.Living,
       Tags: player.Tags,
-      TargetName: player.Target,
+      TargetName: target.Name,
       TargetLat: target.Latitude,
       TargetLong: target.Longitude,
       PlayersAlive: game.PlayersAlive,
     };
     if (game.Mode == "Honor") {
       response.Pending = player.PendingAttempts;
-      response.Status = player.AttemptStatus;
+      response.Attempted = player.Attempted;
     }
     return res.send(response);
   } else {
@@ -324,8 +341,8 @@ app.post("/game", async (req, res) => {
 function gameOver(game, res) {
   return res.send({
     LastStanding: game.LastStanding,
-    LastStandingLat: game.Players[game.LastStanding].Latitude,
-    LastStandingLong: game.Players[game.LastStanding].Longitude,
+    LastStandingLat: players[game.LastStanding].Latitude,
+    LastStandingLong: players[game.LastStanding].Longitude,
     HomeLat: game.HomeLat,
     HomeLong: game.HomeLong,
     FinalScores: game.FinalScores,
@@ -334,27 +351,27 @@ function gameOver(game, res) {
 
 app.post("/tag", async (req, res) => {
   // Request Validation
-  if (!req.body.Game) {
-    return sendError(res, "Game code is required.");
+  if (!req.body.Token) {
+    return sendError(res, "Token is required.");
   }
-  if (!req.body.Player) {
-    return sendError(res, "Player is required.");
-  }
-  if (!(req.body.Game in games)) {
+  const token = req.body.Token;
+  const code = decode(token);
+  if (!(code in games)) {
     return sendError(res, "Game does not exist.");
   }
-  let game = games[req.body.Game];
+  let game = games[code];
   if (!game.GameStarted) {
     return sendError(res, "Game not yet started.");
   }
-  if (!game.PlayerList.includes(req.body.Player)) {
-    return sendError(res, "Player not in game.");
+  if (!(token in players)) {
+    return sendError(res, "Invalid token.");
   }
+  let player = players[token];
+
   let countdown = (game.TagStartTime - new Date()) / 1000;
   if (countdown > 0) {
     return sendError(res, "Start delay not over.");
   }
-  let player = game.Players[req.body.Player];
   if (game.Mode == "Manual") {
     let now = new Date();
     if (now - player.LastAttempt < game.Cooldown * 1000) {
@@ -367,13 +384,13 @@ app.post("/tag", async (req, res) => {
     return res.send({ Success: true });
   }
   if (game.Mode == "Honor") {
-    let target = game.Players[player.Target];
-    if (target.PendingAttempts.includes(req.body.Player)) {
-      player.AttemptStatus = "Pending";
+    let target = players[player.Target];
+    if (player.Name in target.PendingAttempts) {
+      player.Attempted = true;
       return sendError(res, "Previous attempt still pending.");
     } else {
-      target.PendingAttempts.push(req.body.Player);
-      player.AttemptStatus = "Pending";
+      target.PendingAttempts[player.Name] = token;
+      player.Attempted = true;
       return res.send({ Success: true });
     }
   }
@@ -381,51 +398,43 @@ app.post("/tag", async (req, res) => {
 
 app.post("/verify", async (req, res) => {
   // Request Validation
-  if (!req.body.Game) {
-    return sendError(res, "Game code is required.");
+  if (!req.body.Token) {
+    return sendError(res, "Token is required.");
   }
-  if (!req.body.Player) {
-    return sendError(res, "Player is required.");
+  const token = req.body.Token;
+  const code = decode(token);
+  if (!(code in games)) {
+    return sendError(res, "Game does not exist.");
   }
+  let game = games[code];
+  if (!(token in players)) {
+    return sendError(res, "Invalid token.");
+  }
+  let player = players[token];
+
   if (!req.body.Hunter) {
     return sendError(res, "Hunter is required.");
   }
   if (!req.body.Accept) {
     return sendError(res, "Response is required.");
   }
-  if (!(req.body.Game in games)) {
-    return sendError(res, "Game does not exist.");
-  }
-  let game = games[req.body.Game];
-  if (!game.GameStarted) {
-    return sendError(res, "Game not yet started.");
-  }
-  if (!game.PlayerList.includes(req.body.Player)) {
-    return sendError(res, "Player not in game.");
-  }
-  let player = game.Players[req.body.Player];
-  if (!player.PendingAttempts.includes(req.body.Hunter)) {
+  if (!(req.body.Hunter in player.PendingAttempts)) {
     return sendError(res, "No matching tag attempt found.");
   }
-  let hunter = game.Players[req.body.Hunter];
+  let hunter = players[player.PendingAttempts[req.body.Hunter]];
   if (req.body.Accept.toLowerCase() == "true") {
     hunter.AttemptStatus = "Accepted";
     processTag(game, hunter);
     return res.send({ Success: true });
   } else {
-    player.PendingAttempts = player.PendingAttempts.filter(
-      (value, index, arr) => {
-        return value != req.body.Hunter;
-      }
-    );
+    delete player.PendingAttempts[hunter.Name];
     hunter.AttemptStatus = "Rejected";
     return res.send({ Success: true });
   }
 });
 
 function ProximityCheck(game, player) {
-  let targetName = player.Target;
-  let target = game.Players[targetName];
+  let target = players[player.Target];
   let targetLat = target.Latitude;
   let targetLong = target.Longitude;
   let targetTimestamp = target.Timestamp;
@@ -447,16 +456,17 @@ function ProximityCheck(game, player) {
 }
 
 function processTag(game, player) {
-  player.LastTag = new Date();
-  let players = game.Players;
-  let targetName = player.Target;
-  let target = players[targetName];
+  let target = players[player.Target];
 
   target.Living = false;
   player.Tags += 1;
+  player.Attempted = false;
   game.PlayersAlive -= 1;
 
   if (game.Mode == "Honor") {
+    for (const [name, token] of target.PendingAttempts.entries()) {
+      players[token].Attempted = false;
+    }
     target.PendingAttempts = [];
   }
 
@@ -476,9 +486,11 @@ function processTag(game, player) {
     // Assign next target
     const newTarget = target.Target;
     player.Target = newTarget;
-    for (let [key, value] of Object.entries(players)) {
-      if (value.Target == targetName) {
-        value.Target = newTarget;
+    console.log("Setting", player.Name, "target to", players[newTarget].Name);
+    for (let [t, p] of Object.entries(players)) {
+      if (players[p.Target].Name == target.Name) {
+        players[p.Target].Target = newTarget;
+        console.log("Setting", p.Name, "target to", players[newTarget].Name);
       }
     }
   }
