@@ -371,7 +371,6 @@ status, response = fetch('game', {
     'Longitude': 0
 })
 assert status == 200
-print(response)
 assert response['Pending'] == [host]
 
 # Attempt Still Pending Error

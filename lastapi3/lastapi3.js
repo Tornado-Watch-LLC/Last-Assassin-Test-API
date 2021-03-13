@@ -473,7 +473,7 @@ function processTag(game, player) {
         game.LastLat = value.Latitude;
         game.LastLong = value.Longitude;
       }
-      results[key] = value.Tags;
+      results[value.Name] = value.Tags;
     }
     game.FinalScores = results;
   } else {
