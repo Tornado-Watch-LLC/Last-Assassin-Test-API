@@ -265,7 +265,7 @@ function startGame(game) {
 
     // For an honor game, add the PendingAttempts list
     if (game.Mode == "Honor") {
-      player.PendingAttempts = [];
+      player.PendingAttempts = {};
       player.Attempted = false;
     }
   }
@@ -323,7 +323,7 @@ app.post("/game", async (req, res) => {
       PlayersAlive: game.PlayersAlive,
     };
     if (game.Mode == "Honor") {
-      response.Pending = player.PendingAttempts;
+      response.Pending = Object.keys(player.PendingAttempts);
       response.Attempted = player.Attempted;
     }
     return res.send(response);
@@ -456,7 +456,7 @@ function processTag(game, player) {
   game.PlayersAlive -= 1;
 
   if (game.Mode == "Honor") {
-    for (const [name, token] of target.PendingAttempts.entries()) {
+    for (const [name, token] of Object.entries(target.PendingAttempts)) {
       players[token].Attempted = false;
     }
     target.PendingAttempts = [];

@@ -190,21 +190,14 @@ for i in range(1, len(players)):
 print('Start Errors:')
 bad_requests = [
     {}, {
-        'Token': 'this game does not exist',
-        'HomeLat': homelat,
-        'HomeLong': homelong
+        'Token': 'this game does not exist'
     }, {
-        'Token': tokens[1],
-        'HomeLat': homelat,
-        'HomeLong': homelong
-    }, {
-        'Token': tokens[0]
+        'Token': tokens[1]
     }]
 errors = [
     'Token is required.',
     'Game does not exist.',
-    'You are not the host.',
-    'Home coordinates are required.']
+    'You are not the host.']
 checkErrors('start', bad_requests, errors)
 
 # Early Game Call
@@ -369,6 +362,17 @@ status, response = fetch('game', {
     'Longitude': 0
 })
 assert response['Attempted'] == True
+host_target = targets[host]
+host_target_index = players.index(host_target)
+host_target_token = tokens[host_target_index]
+status, response = fetch('game', {
+    'Token': host_target_token,
+    'Latitude': 0,
+    'Longitude': 0
+})
+assert status == 200
+print(response)
+assert response['Pending'] == [host]
 
 # Attempt Still Pending Error
 checkError('tag', {
@@ -378,9 +382,6 @@ time.sleep(2.5)
 
 # Valid Verify Call (Reject)
 print('Valid Verify Call (Reject)')
-host_target = targets[host]
-host_target_index = players.index(host_target)
-host_target_token = tokens[host_target_index]
 status, response = fetch('verify', {
     'Token': host_target_token,
     'Hunter': host,
