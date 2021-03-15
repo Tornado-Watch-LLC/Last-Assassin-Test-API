@@ -469,7 +469,7 @@ function processTag(game, player) {
     let results = {};
     for (let [key, value] of Object.entries(players)) {
       if (value.Living) {
-        game.LastStanding = key;
+        game.LastStanding = value.Name;
         game.LastLat = value.Latitude;
         game.LastLong = value.Longitude;
       }

@@ -1,8 +1,8 @@
 import requests
 import time
 import json
-# url = 'https://api.lastassassin.app/'
-url = 'http://localhost:3001/'
+url = 'https://api.lastassassin.app/'
+#url = 'http://localhost:3001/'
 
 total_errors = 39
 
@@ -90,7 +90,6 @@ for i in range(1, len(players)):
         'Player': players[i]
     })
     assert status == 200
-    print(response)
     tokens.append(response['Token'])
     if i < len(players) - 1:
         assert response['Player'] == players[i]
@@ -125,7 +124,6 @@ status, response = fetch('host', {
     'Token': tokens[0]
 })
 assert status == 200
-print(response)
 assert response['Players'] == players
 assert response['Host'] == host
 assert response['Mode'] == 'Manual'
