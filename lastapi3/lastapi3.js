@@ -467,13 +467,13 @@ function processTag(game, player) {
     // End game, set winner and final scores
     game.GameOver = true;
     let results = {};
-    for (let [key, value] of Object.entries(players)) {
-      if (value.Living) {
-        game.LastStanding = value.Name;
-        game.LastLat = value.Latitude;
-        game.LastLong = value.Longitude;
+    for (let [token, name] of Object.entries(game.PlayerList)) {
+      if (players[token].Living) {
+        game.LastStanding = players[token].Name;
+        game.LastLat = players[token].Latitude;
+        game.LastLong = players[token].Longitude;
       }
-      results[value.Name] = value.Tags;
+      results[players[token].Name] = players[token].Tags;
     }
     game.FinalScores = results;
   } else {
