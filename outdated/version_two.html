@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Last API v2</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="column">
+      <h2>Create Game</h2>
+
+      <button onclick="Create()">Send</button>
+      <p id="create_result">Results will go here.</p>
+
+      <h2>Start Game</h2>
+
+      <label for="scode">Game Code:</label>
+      <input type="text" id="scode" name="scode" /><br /><br />
+      <label for="delay">Start Delay (seconds):</label>
+      <input type="number" id="delay" name="delay" /><br /><br />
+      <button onclick="Start()">Send</button>
+      <p id="start_result">Results will go here.</p>
+
+      <h2>Lobby Heartbeat</h2>
+
+      <label for="lcode">Game Code:</label>
+      <input type="text" id="lcode" name="lcode" /><br /><br />
+      <label for="lname">Player Name:</label>
+      <input type="text" id="lname" name="lname" /><br /><br />
+      <button onclick="Lobby()">Send</button>
+      <p id="lobby_result">Results will go here.</p>
+
+      <h2>In-Game Heartbeat</h2>
+
+      <label for="code">Game Code:</label>
+      <input type="text" id="code" name="code" /><br /><br />
+      <label for="name">Player Name:</label>
+      <input type="text" id="name" name="name" /><br /><br />
+      <label for="lat">Latitude:</label>
+      <input type="number" id="lat" name="lat" value=".0005" /><br /><br />
+      <label for="long">Longitude:</label>
+      <input type="number" id="long" name="long" value=".0005" /><br /><br />
+      <button onclick="Game()">Send</button>
+      <p id="game_result">Results will go here.</p>
+    </div>
+
+    <script src="https://cdn.socket.io/socket.io-3.0.1.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

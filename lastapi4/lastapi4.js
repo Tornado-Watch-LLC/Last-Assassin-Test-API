@@ -1,13 +1,12 @@
+const serverless = require("serverless-http");
 const express = require("express");
-const bodyParser = require("body-parser");
 var cors = require("cors");
 var AWS = require("aws-sdk");
-var check = require("./word_check");
-const { ConnectContactLens } = require("aws-sdk");
 
 AWS.config.update({
   region: "us-west-2",
-  endpoint: "http://localhost:8000",
+  endpoint: "dynamodb.us-west-2.amazonaws.com",
+  //endpoint: "http://localhost:8000",
 });
 
 var db = new AWS.DynamoDB();
@@ -20,12 +19,11 @@ var corsOptions = {
 app.use(cors(corsOptions));
 app.options("*", cors());
 
-app.use(bodyParser.json());
-app.use(
-  bodyParser.urlencoded({
-    extended: false,
-  })
-);
+app.use(express.json());
+
+app.get("/", async (req, res, next) => {
+  res.status(200).send("Hello World!");
+});
 
 /* Game Database Functions
 Schema:
@@ -347,6 +345,8 @@ function to_letters(i) {
 // Create Game
 
 app.post("/create", async (req, res) => {
+  req.body = JSON.parse(req.body);
+  print(req.body);
   if (!req.body.Host) {
     return sendError(res, "Host is required.");
   } else {
@@ -383,13 +383,15 @@ function makeid(length) {
     for (var i = 0; i < length; i++) {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
-  } while (!check.code_okay(result));
+  } while (!code_okay(result));
   return result;
 }
 
 // Join Game
 
 app.post("/join", async (req, res) => {
+  req.body = JSON.parse(req.body);
+  print(req.body);
   // Request Validation
   if (!req.body.Game) {
     return sendError(res, "Game code is required.");
@@ -425,6 +427,8 @@ app.post("/join", async (req, res) => {
 // Lobby Heartbeats
 
 app.post("/host", async (req, res) => {
+  req.body = JSON.parse(req.body);
+  print(req.body);
   // Request Validation
   if (!req.body.Token) {
     return sendError(res, "Token is required.");
@@ -522,6 +526,8 @@ function LobbyResponse(game, res) {
 }
 
 app.post("/lobby", async (req, res) => {
+  req.body = JSON.parse(req.body);
+  print(req.body);
   // Request Validation
   if (!req.body.Token) {
     return sendError(res, "Token is required.");
@@ -542,6 +548,8 @@ app.post("/lobby", async (req, res) => {
 // Start Game
 
 app.post("/start", async (req, res) => {
+  req.body = JSON.parse(req.body);
+  print(req.body);
   // Request Validation
   if (!req.body.Token) {
     return sendError(res, "Token is required.");
@@ -611,6 +619,8 @@ function shuffle(array) {
 // In-Game Heartbeat
 
 app.post("/game", async (req, res) => {
+  req.body = JSON.parse(req.body);
+  print(req.body);
   // Request Validation
   if (!req.body.Token) {
     return sendError(res, "Token is required.");
@@ -774,6 +784,8 @@ function gameOver(game, res) {
 // Tag
 
 app.post("/tag", async (req, res) => {
+  req.body = JSON.parse(req.body);
+  print(req.body);
   // Request Validation
   if (!req.body.Token) {
     return sendError(res, "Token is required.");
@@ -867,6 +879,8 @@ app.post("/tag", async (req, res) => {
 // Verify
 
 app.post("/verify", async (req, res) => {
+  req.body = JSON.parse(req.body);
+  print(req.body);
   // Request Validation
   if (!req.body.Token) {
     return sendError(res, "Token is required.");
@@ -1012,4 +1026,37 @@ function removeItem(arr, value) {
   return arr;
 }
 
+function code_okay(code) {
+  code = code.toLowerCase();
+  let skip_words = [
+    "arse",
+    "ass",
+    "ahole",
+    "bitch",
+    "cunt",
+    "damn",
+    "fuck",
+    "hell",
+    "god",
+    "jesus",
+    "christ",
+    "nigga",
+    "piss",
+    "prick",
+    "shit",
+    "slut",
+    "dick",
+    "cock",
+    "pussy",
+    "slut",
+  ];
+  for (let word of skip_words) {
+    if (code.includes(word)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 app.listen(3001, () => console.log("Server listening on port 3001!"));
+//module.exports.handler = serverless(app);

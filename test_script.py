@@ -2,13 +2,13 @@ import requests
 import time
 import json
 #url = 'https://api.lastassassin.app/'
-url = 'http://localhost:3001/'
-
+#url = 'http://localhost:3001/'
+url = "https://8tknjv36o3.execute-api.us-west-2.amazonaws.com/dev/"
 total_errors = 39
 
 
 def fetch(route, request):
-    response = requests.post(url + route, request)
+    response = requests.post(url + route, json.dumps(request))
     status = response.status_code
     if status == 200:
         return status, response.json()
@@ -18,6 +18,7 @@ def fetch(route, request):
 
 def checkError(route, request, message):
     status, result = fetch(route, request)
+    print(status, result, message)
     print('-', result['Error'])
     assert status == 200
     assert result['Error'] == message, json.dumps(
@@ -33,8 +34,8 @@ def checkErrors(route, bad_requests, errors):
 
 host = 'Host'
 mode = 'Honor'
-delay = 2
-cd = 2
+delay = 4
+cd = 4
 t_dist = 5
 l_dist = 1
 players = [host, 'Steven', 'Stefan', 'Ben', 'Trent', 'Steven']
@@ -278,7 +279,7 @@ checkError('tag', {
 }, 'Start delay not over.')
 
 # Valid Game Calls (After Countdown)
-time.sleep(2.5)
+time.sleep(4)
 targets = {}
 for i in range(len(players)):
     status, response = fetch('game', {
@@ -374,7 +375,7 @@ assert response['Pending'] == [host]
 checkError('tag', {
     'Token': tokens[0]
 }, 'Previous attempt still pending.')
-time.sleep(2.5)
+time.sleep(4)
 
 # Valid Verify Call (Reject)
 print('Valid Verify Call (Reject)')
