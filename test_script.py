@@ -1,14 +1,13 @@
 import requests
 import time
 import json
-#url = 'https://api.lastassassin.app/'
+url = 'https://api.lastassassin.app/'
 #url = 'http://localhost:3001/'
-url = "https://8tknjv36o3.execute-api.us-west-2.amazonaws.com/dev/"
 total_errors = 39
 
 
 def fetch(route, request):
-    response = requests.post(url + route, json.dumps(request))
+    response = requests.post(url + route, json=request)
     status = response.status_code
     if status == 200:
         return status, response.json()
@@ -34,7 +33,7 @@ def checkErrors(route, bad_requests, errors):
 
 host = 'Host'
 mode = 'Honor'
-delay = 4
+delay = 5
 cd = 4
 t_dist = 5
 l_dist = 1
@@ -237,6 +236,12 @@ checkError('join', {
     'Player': 'New Player'
 }, 'Cannot join in-progress game.')
 
+# Early Tag Call
+print('Early Tag Call:')
+checkError('tag', {
+    'Token': tokens[0]
+}, 'Start delay not over.')
+
 ## In-Game Heartbeat ##
 
 # Errors
@@ -267,16 +272,11 @@ for i in range(len(players)):
         'Latitude': i,
         'Longitude': i
     })
+    print(status, response)
     assert status == 200
     assert response['Countdown'] < delay
     assert response['Countdown'] > 0
     print('Valid Game Call')
-
-# Early Tag Call
-print('Early Tag Call:')
-checkError('tag', {
-    'Token': tokens[0]
-}, 'Start delay not over.')
 
 # Valid Game Calls (After Countdown)
 time.sleep(4)

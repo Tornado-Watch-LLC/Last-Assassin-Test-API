@@ -122,6 +122,25 @@ async function addPlayerToGame(gameCode, playerToken, playerName) {
   return await db.updateItem(params).promise();
 }
 
+async function kickPlayer(token, game) {
+  // Give new target to all hunters
+  let updates = {};
+  let playerTarget = game[token + "target"];
+  for (let t of game.players) {
+    if (game[t + "target"] == token) {
+      game[t + "target"] = playerTarget;
+      updates[t + "target"] = playerTarget;
+    }
+  }
+  // Remove the player from the list of players in the game
+  let removes = {
+    key: "players",
+    value: [token],
+  };
+
+  updateGame(getGame(token), updates, None, removes, None, None);
+}
+
 async function updateGame(
   gameCode,
   changes,
@@ -345,9 +364,12 @@ function to_letters(i) {
 // Create Game
 
 app.post("/create", async (req, res) => {
-  req.body = JSON.parse(req.body);
+  print(typeof req.body);
   print(req.body);
-  if (!req.body.Host) {
+  req.body = parse(req.body);
+  print(typeof req.body);
+  print(req.body);
+  if (req.body.Host == null) {
     return sendError(res, "Host is required.");
   } else {
     const host = req.body.Host;
@@ -390,13 +412,13 @@ function makeid(length) {
 // Join Game
 
 app.post("/join", async (req, res) => {
-  req.body = JSON.parse(req.body);
+  req.body = parse(req.body);
   print(req.body);
   // Request Validation
-  if (!req.body.Game) {
+  if (req.body.Game == null) {
     return sendError(res, "Game code is required.");
   }
-  if (!req.body.Player) {
+  if (req.body.Player == null) {
     return sendError(res, "Player is required.");
   }
   const code = decode(req.body.Game);
@@ -427,10 +449,10 @@ app.post("/join", async (req, res) => {
 // Lobby Heartbeats
 
 app.post("/host", async (req, res) => {
-  req.body = JSON.parse(req.body);
+  req.body = parse(req.body);
   print(req.body);
   // Request Validation
-  if (!req.body.Token) {
+  if (req.body.Token == null) {
     return sendError(res, "Token is required.");
   }
   const token = req.body.Token;
@@ -526,10 +548,10 @@ function LobbyResponse(game, res) {
 }
 
 app.post("/lobby", async (req, res) => {
-  req.body = JSON.parse(req.body);
+  req.body = parse(req.body);
   print(req.body);
   // Request Validation
-  if (!req.body.Token) {
+  if (req.body.Token == null) {
     return sendError(res, "Token is required.");
   }
   const token = req.body.Token;
@@ -548,10 +570,10 @@ app.post("/lobby", async (req, res) => {
 // Start Game
 
 app.post("/start", async (req, res) => {
-  req.body = JSON.parse(req.body);
+  req.body = parse(req.body);
   print(req.body);
   // Request Validation
-  if (!req.body.Token) {
+  if (req.body.Token == null) {
     return sendError(res, "Token is required.");
   }
   const token = req.body.Token;
@@ -619,13 +641,13 @@ function shuffle(array) {
 // In-Game Heartbeat
 
 app.post("/game", async (req, res) => {
-  req.body = JSON.parse(req.body);
+  req.body = parse(req.body);
   print(req.body);
   // Request Validation
-  if (!req.body.Token) {
+  if (req.body.Token == null) {
     return sendError(res, "Token is required.");
   }
-  if (!req.body.Latitude || !req.body.Longitude) {
+  if (req.body.Latitude == null || req.body.Longitude == null) {
     return sendError(res, "Coordinates are required.");
   }
   const token = req.body.Token;
@@ -651,13 +673,20 @@ app.post("/game", async (req, res) => {
   updates[token + "lat"] = N(parseFloat(req.body.Latitude));
   updates[token + "long"] = N(parseFloat(req.body.Longitude));
 
-  // Attempt tag in auto mode, return the relevant information
   let countdown = (new Date(JSON.parse(game.tagStartTime)) - new Date()) / 1000;
   if (countdown > 0) {
     return res.send({
       Countdown: countdown,
     });
-  } else if (!game.gameOver) {
+  }
+
+  // If target has been silent for too long, remove them from the game
+  if (new Date() - game[game[token + "target"] + timestamp] > 120000) {
+    kickPlayer(game[token + "target"], game);
+  }
+
+  // Attempt tag in auto mode, return the relevant information
+  if (!game.gameOver) {
     if (game.mode == "Auto") {
       if (ProximityCheck(game, token)) {
         // Start Process Tag Block
@@ -784,10 +813,10 @@ function gameOver(game, res) {
 // Tag
 
 app.post("/tag", async (req, res) => {
-  req.body = JSON.parse(req.body);
+  req.body = parse(req.body);
   print(req.body);
   // Request Validation
-  if (!req.body.Token) {
+  if (req.body.Token == null) {
     return sendError(res, "Token is required.");
   }
   const token = req.body.Token;
@@ -879,10 +908,10 @@ app.post("/tag", async (req, res) => {
 // Verify
 
 app.post("/verify", async (req, res) => {
-  req.body = JSON.parse(req.body);
+  req.body = parse(req.body);
   print(req.body);
   // Request Validation
-  if (!req.body.Token) {
+  if (req.body.Token == null) {
     return sendError(res, "Token is required.");
   }
   let token = req.body.Token;
@@ -894,10 +923,10 @@ app.post("/verify", async (req, res) => {
   if (!game.players.includes(token)) {
     return sendError(res, "Invalid token.");
   }
-  if (!req.body.Hunter) {
+  if (req.body.Hunter == null) {
     return sendError(res, "Hunter is required.");
   }
-  if (!req.body.Accept) {
+  if (req.body.Accept == null) {
     return sendError(res, "Response is required.");
   }
   let hunterName = req.body.Hunter;
@@ -918,7 +947,10 @@ app.post("/verify", async (req, res) => {
   game[hunterToken + "attempted"] = false;
   updates[hunterToken + "attempted"] = B(false);
 
-  if (req.body.Accept.toLowerCase() == "true") {
+  if (typeof req.body.Accept == "string") {
+    req.body.Accept = req.body.Accept.toLowerCase() == "true";
+  }
+  if (req.body.Accept) {
     // Start Process Tag Block
     let targetToken = token;
     token = hunterToken;
@@ -976,6 +1008,30 @@ app.post("/verify", async (req, res) => {
   }
 });
 
+// Quit
+
+app.post("/quit", async (req, res) => {
+  req.body = parse(req.body);
+  print(req.body);
+  // Request Validation
+  if (req.body.Token == null) {
+    return sendError(res, "Token is required.");
+  }
+  let token = req.body.Token;
+  const code = decode(token);
+  let game = await getGame(code);
+  if (game == null) {
+    return sendError(res, "Game does not exist.");
+  }
+  if (!game.players.includes(token)) {
+    return sendError(res, "Invalid token.");
+  }
+
+  kickPlayer(token, game);
+
+  return res.send({ Success: true });
+});
+
 // General Helper Functions
 
 function decode(token) {
@@ -1018,6 +1074,17 @@ function print(thing) {
   console.log(thing);
 }
 
+function parse(body) {
+  let temp = body;
+  try {
+    temp = JSON.parse(temp);
+    return temp;
+  } catch (e) {
+    print(e);
+    return body;
+  }
+}
+
 function removeItem(arr, value) {
   var index = arr.indexOf(value);
   if (index > -1) {
@@ -1033,9 +1100,12 @@ function code_okay(code) {
     "ass",
     "ahole",
     "bitch",
+    "btch",
     "cunt",
+    "cnt",
     "damn",
     "fuck",
+    "fck",
     "hell",
     "god",
     "jesus",
@@ -1044,6 +1114,7 @@ function code_okay(code) {
     "piss",
     "prick",
     "shit",
+    "sht",
     "slut",
     "dick",
     "cock",
@@ -1058,5 +1129,5 @@ function code_okay(code) {
   return true;
 }
 
-app.listen(3001, () => console.log("Server listening on port 3001!"));
-//module.exports.handler = serverless(app);
+//app.listen(3001, () => console.log("Server listening on port 3001!"));
+module.exports.handler = serverless(app);
