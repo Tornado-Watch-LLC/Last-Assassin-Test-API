@@ -122,23 +122,33 @@ async function addPlayerToGame(gameCode, playerToken, playerName) {
   return await db.updateItem(params).promise();
 }
 
-async function kickPlayer(token, game) {
-  // Give new target to all hunters
+async function removePlayer(token, game) {
   let updates = {};
-  let playerTarget = game[token + "target"];
-  for (let t of game.players) {
-    if (game[t + "target"] == token) {
-      game[t + "target"] = playerTarget;
-      updates[t + "target"] = playerTarget;
+  let decrement = [];
+  if (game.GameStarted) {
+    if (game[token + "living"]) {
+      game.playersAlive -= 1;
+      decrement.append("playersAlive");
+    }
+    // Give new target to all hunters
+    let playerTarget = game[token + "target"];
+    for (let t of game.players) {
+      if (game[t + "target"] == token) {
+        game[t + "target"] = playerTarget;
+        updates[t + "target"] = playerTarget;
+        game[t + "attempted"] = false;
+        updates[t + "attempted"] = false;
+      }
     }
   }
+
   // Remove the player from the list of players in the game
   let removes = {
     key: "players",
     value: [token],
   };
 
-  updateGame(getGame(token), updates, None, removes, None, None);
+  updateGame(getGame(token), updates, None, removes, None, decrement);
 }
 
 async function updateGame(
@@ -682,7 +692,7 @@ app.post("/game", async (req, res) => {
 
   // If target has been silent for too long, remove them from the game
   if (new Date() - game[game[token + "target"] + timestamp] > 120000) {
-    kickPlayer(game[token + "target"], game);
+    removePlayer(game[token + "target"], game);
   }
 
   // Attempt tag in auto mode, return the relevant information
@@ -1027,7 +1037,41 @@ app.post("/quit", async (req, res) => {
     return sendError(res, "Invalid token.");
   }
 
-  kickPlayer(token, game);
+  removePlayer(token, game);
+
+  return res.send({ Success: true });
+});
+
+// Kick
+
+app.post("/kick", async (req, res) => {
+  req.body = parse(req.body);
+  print(req.body);
+  // Request Validation
+  if (req.body.Token == null) {
+    return sendError(res, "Token is required.");
+  }
+  if (req.body.Player == null) {
+    return sendError(res, "Player name is required.");
+  }
+  let token = req.body.Token;
+  const code = decode(token);
+  let game = await getGame(code);
+  if (game == null) {
+    return sendError(res, "Game does not exist.");
+  }
+  if (!game.players.includes(token)) {
+    return sendError(res, "Invalid token.");
+  }
+  if (token != game.host) {
+    return sendError(res, "You are not the host.");
+  }
+  let kickToken = getToken(req.body.Player, game);
+  if (kickToken == null) {
+    return sendError(res, "Player not found.");
+  }
+
+  removePlayer(kickToken, game);
 
   return res.send({ Success: true });
 });
@@ -1036,6 +1080,15 @@ app.post("/quit", async (req, res) => {
 
 function decode(token) {
   return token.toUpperCase().substring(0, 5);
+}
+
+function getToken(name, game) {
+  for (let t of game.players) {
+    if (game[t + "name"] == name) {
+      return t;
+    }
+  }
+  return null;
 }
 
 function sendError(res, error) {
